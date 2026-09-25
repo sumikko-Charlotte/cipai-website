@@ -1,0 +1,70 @@
+/* >>> file: assets/css/07-text2music.css */
+/* ---- 文字配乐 ---- */
+.tin{width:100%;min-height:136px;resize:vertical;font-family:inherit;font-size:13.5px;line-height:2.05;
+  padding:13px 15px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);
+  color:var(--ink);outline:none;transition:border-color .22s,background .5s}
+.tin:focus{border-color:var(--accent)}
+.tin::placeholder{color:var(--ink3)}
+.tcbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:10px}
+.tcbar .lbl{font-size:11.5px;color:var(--ink3)}
+select.sel{font-family:inherit;font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--surface);color:var(--ink);outline:none;cursor:pointer;transition:all .22s}
+select.sel:focus{border-color:var(--accent);color:var(--accent)}
+.anl{margin-top:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);
+  padding:14px;display:none;animation:rise .4s ease}
+.anl.on{display:block}
+.anl h4{font-size:13.5px;font-weight:500;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.anl h4 .tag{font-size:10px;color:var(--ink2);border:1px solid var(--border-str);border-radius:99px;padding:2px 9px;font-weight:400}
+.anl .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:11px}
+@media(max-width:700px){.anl .kv{grid-template-columns:repeat(2,1fr)}}
+.anl .kv div{font-size:11px;color:var(--ink3)}
+.anl .kv b{display:block;font-size:13px;color:var(--ink);font-weight:500;margin-bottom:2px;line-height:1.4}
+.anl p{font-size:12.5px;color:var(--ink2);line-height:1.85}
+.anl p.cad{font-family:Consolas,"Microsoft YaHei",monospace;font-size:11.5px;color:var(--ink3);line-height:2;word-break:break-all}
+.anl .lines{margin-top:10px;border-top:1px solid var(--border);padding-top:9px;max-height:158px;overflow-y:auto}
+.anl .ln{font-size:12px;color:var(--ink2);line-height:1.95;display:flex;gap:9px;align-items:baseline}
+.anl .ln .no{flex:0 0 22px;color:var(--ink3);font-size:10.5px;text-align:right}
+.anl .ln .tx{flex:1;min-width:0}
+.anl .ln .rh{color:var(--accent);font-size:10.5px;flex:0 0 auto}
+.cand{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.cand .lbl{font-size:11.5px;color:var(--ink3);align-self:center}
+.gdwrap{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+@media(max-width:900px){.gdwrap{grid-template-columns:repeat(2,1fr)}}
+.gdcard{text-align:left;font-family:inherit;cursor:pointer;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface2);color:var(--ink);padding:11px;transition:all .22s}
+.gdcard:hover{transform:translateY(-2px);border-color:var(--accent);background:var(--accentSoft)}
+.gdcard .g1{font-size:12.5px;font-weight:500}
+.gdcard .g2{font-size:10.5px;color:var(--ink3);margin-top:4px;line-height:1.65}
+.gdcard .g3{font-size:10px;color:var(--accent);margin-top:6px}
+.searchbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.searchbar input{font-family:inherit;font-size:12.5px;padding:9px 13px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--bg2);color:var(--ink);outline:none;flex:1;min-width:180px;transition:border-color .22s}
+.searchbar input:focus{border-color:var(--accent)}
+.cplist{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:330px;overflow-y:auto;padding-right:4px}
+@media(max-width:1000px){.cplist{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:620px){.cplist{grid-template-columns:repeat(2,1fr)}}
+.cpitem{text-align:left;font-family:inherit;cursor:pointer;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface2);color:var(--ink);padding:10px;transition:all .2s}
+.cpitem:hover{border-color:var(--accent);background:var(--accentSoft)}
+.cpitem .cnm{font-size:12.5px;font-weight:500}
+.cpitem .cmeta{font-size:10px;color:var(--ink3);margin-top:4px;line-height:1.6}
+.cpitem .cg{font-size:10px;color:var(--accent);margin-top:4px}
+.cpdetail{margin-top:12px;padding:14px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);display:none}
+.cpdetail.on{display:block;animation:rise .4s ease}
+.cpdetail h4{font-size:14px;font-weight:500;color:var(--accent);margin-bottom:9px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.cpdetail h4 .tag{font-size:10px;color:var(--ink2);border:1px solid var(--border-str);border-radius:99px;padding:2px 9px;font-weight:400}
+.cpdetail p{font-size:12.5px;color:var(--ink2);line-height:1.85;margin-bottom:7px}
+.cpdetail .pl{font-size:11.5px;color:var(--ink2);line-height:2.05;font-family:Consolas,"Microsoft YaHei",monospace;
+  word-break:break-all;margin-top:8px;padding:10px 12px;background:var(--bg2);border-radius:var(--radius-sm)}
+.toggle{font-family:inherit;font-size:12.5px;cursor:pointer;border:1px solid var(--border);background:transparent;
+  color:var(--ink2);padding:9px 16px;border-radius:var(--radius-sm);transition:all .22s;white-space:nowrap}
+.toggle:hover{border-color:var(--accent);color:var(--accent)}
+.collapse{display:none;margin-top:4px}
+.collapse.on{display:block;animation:rise .35s ease}
+.roll{overflow-x:auto}
+.rollkeys{position:sticky;left:0;z-index:2}
+.rollkeys div{height:var(--rowh,15px);font-size:9px}
+.rollrow{height:var(--rowh,15px)}
+.rollcell{min-width:9px}
+footer{margin-top:32px;padding-top:20px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink3);line-height:2}
+footer b{color:var(--ink2);font-weight:500}

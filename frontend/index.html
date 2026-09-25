@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="RJr5DjjetoPqf6RcyueVec">
+<head data-page-node-id="rAWe68f5ruox855WNvqTjE">
+<meta charset="UTF-8" data-page-node-id="JbjuRQXaFdehgQrRgAKGgd">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="rS8mLHGO1geXjJcfPovWuQ">
+<title>旋律的自动伴奏生成 · AI Accompaniment Studio</title>
+<link rel="stylesheet" href="assets/css/01-base.css">
+<link rel="stylesheet" href="assets/css/02-layout.css">
+<link rel="stylesheet" href="assets/css/03-input.css">
+<link rel="stylesheet" href="assets/css/04-styles-instruments.css">
+<link rel="stylesheet" href="assets/css/05-action.css">
+<link rel="stylesheet" href="assets/css/06-result.css">
+<link rel="stylesheet" href="assets/css/07-text2music.css">
+</head>
+<body data-page-node-id="lAzlvHSEtzaqZSCQKAx4wC">
+
+<div class="wrap" data-page-node-id="1twTiMYcED9Nj1rLhADHJs">
+  <header class="topbar" data-page-node-id="IP6kJAwj4vYF7rIjvGNo95">
+    <div class="brand" data-page-node-id="8mGFXHgl8IpVmmysNEjkmu">
+      <div class="logo" data-page-node-id="4REuuyBDM8HKsqxHgFnhaA">&#9835;</div>
+      <div data-page-node-id="qxAzyCBroo3iFjskSedpkf">
+        <h1 data-page-node-id="Z3IPUaPWPX24r61YBFBr2n">旋律的自动伴奏生成</h1>
+        <p data-page-node-id="rola7c4xSgvJuQEzgS31pR">MELODY TO ACCOMPANIMENT · AI ACCOMPANIMENT STUDIO</p>
+      </div>
+    </div>
+    <div class="steps" id="stepBar" data-page-node-id="9I9SkgnBPtz7PVdpUU4rDg">
+      <div class="st on" data-st="1" data-page-node-id="z4smzfSGIg97tkiGeyT2FG">1 录入旋律</div>
+      <div class="st" data-st="2" data-page-node-id="1PiDOZ3HjaVdSalf4JtOER">2 选择风格</div>
+      <div class="st" data-st="3" data-page-node-id="BzX59YiQTHr3BkD4eVnmsr">3 配置乐器</div>
+      <div class="st" data-st="4" data-page-node-id="gASWVrWxYlmQmZAGo1SwBu">4 生成与导出</div>
+    </div>
+  </header>
+
+  <div class="grid" data-page-node-id="hFA8vd6CkYL4jcBRoZ9DwB">
+    <section class="panel" data-page-node-id="4PA2lhLpOgSy3c2f0uaKek">
+      <div class="panel-head" data-page-node-id="8QJ56AcY7nsdZejDYw8bow">
+        <span class="num" data-page-node-id="5bT97g2H5fP9thMmF7TqA8">01</span><h2 data-page-node-id="e7FkE7MLBXgNysbIXFoeDf">录入旋律</h2>
+        <span class="sub" data-page-node-id="CaJAExUEv7O7WsjMfYgNiF">声音识别 / 导入文件 / 手绘</span>
+      </div>
+      <div class="tabs" id="tabs" data-page-node-id="qwBaqMpf8mLENm7GTpRDFK">
+        <button class="tab on" data-tab="hum" data-page-node-id="OZPQScmNrmFNNAfObOmDpO">声音识别</button>
+        <button class="tab" data-tab="file" data-page-node-id="qFO5UrN1BvK4zIxZAzh7D7">导入文件</button>
+        <button class="tab" data-tab="edit" data-page-node-id="IAnJ7MUjURrNU6V44gJQOv">手动编辑</button>
+        <button class="tab" data-tab="text" data-page-node-id="UagJR4oEY8BKNfxN8pQEJz">文字配乐</button>
+      </div>
+
+      <div class="tabbody on" id="tab-hum" data-page-node-id="pLE5Pf6jzupHETZbnHk62o">
+        <div class="humzone" data-page-node-id="nHK6wh4cEM9f4JGzYitiJh">
+          <canvas id="waveCanvas" class="wcv" data-page-node-id="qSvB7aAZjjdBzinBVbsn8Q"></canvas>
+          <div class="livebar" data-page-node-id="YCcZwQbzW1gzc2sjBO7rNj">
+            <div class="livenote" data-page-node-id="0UPJQ5yQ9E44kFptY1YQGF">
+              <div class="ln" id="liveNote" data-page-node-id="ptoNuZCVyksuhVCQkMzreD">—</div>
+              <div class="lf" id="liveFreq" data-page-node-id="BUdghGRm11eKFzEFzJN43K">等待输入</div>
+            </div>
+            <div class="lvl" data-page-node-id="1a5eNWs7n4YQOC8wxt3PXp">
+              <div class="bar" data-page-node-id="QVioLIOHSHxfXzPPdqRKEL"><i id="lvlBar" data-page-node-id="cg7TGFdCV9hiklBScbylp0"></i></div>
+              <div class="cap" id="lvlCap" data-page-node-id="FIpXXs3WCBL1NqdO3YvGz3">音量电平与实时音高检测</div>
+            </div>
+          </div>
+          <button class="recbtn" id="recBtn" data-page-node-id="yDUtmRGO0JH4l7jSpj39vR"><span class="dot" data-page-node-id="HiFcySDc8FGUgVTxvXI4z8"></span><span id="recTxt" data-page-node-id="KZyc0kWXObpjWPBEvTnl0U">按下开始哼唱</span></button>
+          <p class="rec-hint" id="recHint" data-page-node-id="Cp13lt9Cj8ugoTpGDmtTDb">对着麦克风哼一段旋律。系统以自相关算法逐帧追踪音高，<br data-page-node-id="z3pI4ykq98fP316EtyOFFE">结束后自动切分成音符并量化到节奏网格，无需任何乐理基础。</p>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-file" data-page-node-id="PltBKExn0ABDT903WnOrYt">
+        <div class="dropzone" id="dropzone" data-page-node-id="PeTgiORFCEM4SgV2YrXPFp">
+          <div class="big" data-page-node-id="p1VCIWZ1RWIPjsWD8cLCBj">点击选择，或把文件拖到这里</div>
+          <div class="sm" data-page-node-id="NdJJ042Yg8LKu9BXi3F6m3">音频：wav / mp3 / m4a / ogg —— 自动做音高提取<br data-page-node-id="jokgiJrgN6k7HRv0ZJBGLw">MIDI：mid / midi —— 直接解析音符事件</div>
+        </div>
+        <canvas id="waveCanvas2" class="wcv" style="display:none;margin-top:12px" data-page-node-id="pvruETB4HSROzcgB8imjXZ"></canvas>
+        <input type="file" id="fileInput" accept="audio/*,.mid,.midi" style="display:none" data-page-node-id="NvE8n0I4qfYaT0idH5VxHY">
+        <div class="presets" style="margin-top:12px" data-page-node-id="ARFw2j5oI05OfjIgcNNOMv">
+          <span class="lbl" data-page-node-id="H4IJLs1YdpaDjBpCN0yFoE">没有素材？先用示例</span>
+          <button class="chip" data-preset="twinkle" data-page-node-id="qbeVM2WSBJ1oFKQaNeIRCp">小星星</button>
+          <button class="chip" data-preset="pop" data-page-node-id="1a6g1hQz7tNRMqAIAStVc8">流行旋律</button>
+          <button class="chip" data-preset="jazzline" data-page-node-id="kdDzw0YBUqiIFSm3fVkDVH">爵士线条</button>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-edit" data-page-node-id="8ktYWgoNdTYbBor6VVTmWe">
+        <div class="editor-bar" data-page-node-id="tEEva2Kn1yfVWM0l1AVqlf">
+          <span class="lbl" data-page-node-id="8tL5KZwIJIhurB8tu5r4Yx">点击方格切换音符（2 小节 / 16 个八分音符，C4–D5）</span>
+          <button class="chip" id="clearRoll" data-page-node-id="ARH02KxzGZsOO28v5KERyf">清空</button>
+        </div>
+        <div class="roll" data-page-node-id="8XRU3VvUdHlcqjyw3v8mGb">
+          <div class="rollkeys" id="rollKeys" data-page-node-id="B6O4rKbtJG85GRQEIzGrc6"></div>
+          <div class="rollgrid" id="rollGrid" data-page-node-id="ctYvXF6Zq1IHi1JSuheGAs"></div>
+        </div>
+        <div class="presets" data-page-node-id="QOqEGzoHbblK0J9QG7Bg8s">
+          <span class="lbl" data-page-node-id="QF5KiUY3KNILnw9XWWfVXo">示例旋律</span>
+          <button class="chip" data-preset="twinkle" data-page-node-id="zx3Yw5H5ChgSTBxklr8FZk">小星星</button>
+          <button class="chip" data-preset="happy" data-page-node-id="ho2pA6VqKPjpLi6QdP2TKi">生日快乐</button>
+          <button class="chip" data-preset="pop" data-page-node-id="nXXyjeTvRxXcmnfGRTksDU">流行旋律</button>
+          <button class="chip" data-preset="chinese" data-page-node-id="Fsww0aBZZUvVlVrHd37T5z">五声音阶</button>
+          <button class="chip" data-preset="jazzline" data-page-node-id="Ea1h7xnTfGJ0y0LFaJArIN">爵士线条</button>
+          <button class="chip" data-preset="ballad" data-page-node-id="vi1NdiLBTzygg4KfeF5pEW">抒情线条</button>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-text" data-page-node-id="2DyErGaBMXhMQ8Ave0LjMc">
+        <div class="presets" style="margin-top:0;margin-bottom:11px" data-page-node-id="JYoNmFlDSSVtA4x2y3QzZ3">
+          <span class="lbl" data-page-node-id="oFBruo3bMuGfeRV5cDWPpO">文本类型</span>
+          <button class="chip on" data-tmode="ci" data-page-node-id="b4Zrh3X1N7912wh1HMlMvE">诗词 · 词牌</button>
+          <button class="chip" data-tmode="lyric" data-page-node-id="NdB2HIcUWF1AhFPcU0beFJ">歌词 · 中文</button>
+          <button class="chip" data-tmode="en" data-page-node-id="xWcHtC54hH99SyJWO9FRw4">Lyrics · English</button>
+        </div>
+        <textarea class="tin" id="textIn" placeholder="在这里粘贴文本…"></textarea>
+        <div class="tcbar" data-page-node-id="SEIm7jdC9HUzHXDXVSS6L3">
+          <button class="chip" id="demoTextBtn" data-page-node-id="R6i0299aRp2qaSyHHQw2qY">填入示例</button>
+          <button class="chip" id="analyzeBtn" data-page-node-id="1PYoHkdr8GWMsHx0xDaKLj">分析文本</button>
+          <button class="chip" id="composeBtn" data-page-node-id="9DM7bLXUoelpMG15G3RplB">生成旋律并配乐</button>
+        </div>
+        <div class="tcbar" data-page-node-id="GDXlpsieefOGJqXE1BMdl4">
+          <span class="lbl" data-page-node-id="TbkEcleTNj5dEApi8PH9GX">音域适配</span>
+          <select class="sel" id="vRange" data-page-node-id="SLbGFW2ZySDq7wWFnc5364"></select>
+          <span class="lbl" data-page-node-id="Sm0z9km8WzwFTQQJRnGRE1">情绪</span>
+          <select class="sel" id="vMood" data-page-node-id="J39OqGuYfpq5IA8HQrwuCl"></select>
+          <span class="lbl" data-page-node-id="XV66Grrc8CnTHEvyeNKpMm">音阶</span>
+          <select class="sel" id="vScale" data-page-node-id="EWOC7CtmJRQgLYrMCUhlE0"></select>
+        </div>
+        <div class="anl" id="anlCard" data-page-node-id="2umsJvVkKCwuDHOzrHrmeC"></div>
+      </div>
+
+      <div class="notice" id="notice" data-page-node-id="RvsulGVcYFaFITmFcMBQna"></div>
+    </section>
+
+    <section class="panel" data-page-node-id="NcQlD0SkRgXZQwqw24hLrl">
+      <div class="panel-head" data-page-node-id="nBRzqkNOo87M6xaTobRvrH">
+        <span class="num" data-page-node-id="sS2LuyBuVFo0pGfzAckVxd">02</span><h2 data-page-node-id="EEwJVOqKiGyBEbOZG75YRG">选择伴奏风格</h2>
+        <span class="sub" id="styleCount" data-page-node-id="RoF1WOTCDMMe3EKzy2b6Ln"></span>
+      </div>
+      <div class="style-grid" id="styleGrid" data-page-node-id="V7RpzLGL7HyR91GQWu7I5A"></div>
+      <div class="style-detail" id="styleDetail" data-page-node-id="r7FEUI4tth7GluTgU4Aj8G"></div>
+    </section>
+  </div>
+
+  <section class="panel" data-page-node-id="fieuATkDBZnzhRGUJssl5d">
+    <div class="panel-head" data-page-node-id="nnGTCOu7v72mZG2d8jvf7Q">
+      <span class="num" data-page-node-id="erlNtUPIjsCD2aJWqVtA41">03</span><h2 data-page-node-id="n5LZRAQZMy6FBMTtahBXxs">配置乐器</h2>
+      <span class="sub" data-page-node-id="dWKoIEOiS2GvnjIPz2Iaet">同一段和弦，换乐器即换呈现</span>
+    </div>
+    <div class="inst-row" data-page-node-id="UIpG9ouwBauvrHW8Tnyy6s">
+      <div class="cap" data-page-node-id="X9FLJuc2lqbVt5TePKrFPO"><b data-page-node-id="Hvfpoq505TEfpRFE1N2EpT">和弦声部</b>　承担和声织体的乐器</div>
+      <div class="inst-grid" id="instGrid1" data-page-node-id="xUuDHCTTT0nCqDRPQeCle1"></div>
+    </div>
+    <div class="inst-row" data-page-node-id="XMLl7TkEjblbR6S0Va2Pmd">
+      <div class="cap" data-page-node-id="spFPleQ7f7EOd1fDxHl0zQ"><b data-page-node-id="ouFIziKlWC02QfDOO50eA2">低音声部</b>　铺底的低声部乐器</div>
+      <div class="inst-grid" id="instGrid2" data-page-node-id="COKmJswlvyzkCw008XkOHD"></div>
+    </div>
+    <div class="abbar" data-page-node-id="RNF7xt11cpaZ2XXFMBdezK">
+      <button class="chip" id="abBtn" data-page-node-id="sNVMtknd3CudzEQnEA7MfI">A/B 对比试听</button>
+      <span class="lbl" id="abTip" data-page-node-id="K4lqNtE0HPZyn2EHT7p861">保持和弦序列不变，依次用三种乐器组合演奏，直接听差别</span>
+    </div>
+  </section>
+
+  <div class="action" data-page-node-id="9niKfF52lvzf5WMA9vWm4u">
+    <button class="btn-go" id="goBtn" data-page-node-id="XOXVse6xqBQA7IVJLfXjDG">生成伴奏</button>
+    <div class="prog" id="prog" data-page-node-id="b8Z6g3OllcZozM4Thvpezs">
+      <div class="pi" data-pi="0" data-page-node-id="Ow5nJqHc1XozV0WbHkSe5e"><span class="kd" data-page-node-id="7rqvgPCtQ0jygionCPQCyD"></span>音高提取与音符切分</div>
+      <div class="pi" data-pi="1" data-page-node-id="DwUsJ9Vo2GW109NCf2RCUD"><span class="kd" data-page-node-id="JPuYpcfq5Hcle4f8Dxpxsf"></span>调性判定</div>
+      <div class="pi" data-pi="2" data-page-node-id="oeMlgVbhm9NG3MBhZ4cdft"><span class="kd" data-page-node-id="k62KCf1gQP0v8mP8vMrdl2"></span>HMM · 维特比解码和弦</div>
+      <div class="pi" data-pi="3" data-page-node-id="4Cc8KDR1yHYLKZLHSjEWdM"><span class="kd" data-page-node-id="NikGmH0XsS0APbJ1V81FDH"></span>音型编排与音色合成</div>
+    </div>
+  </div>
+
+  <section class="panel" id="result" data-page-node-id="P7XnEizzhoAQDohm7CFPca">
+    <div class="panel-head" data-page-node-id="u40KrtE0FhJv92MhvSjcHD">
+      <span class="num" data-page-node-id="KX8ll9HiYYlh1FKqyCK9S3">04</span><h2 data-page-node-id="AtmQsAdqxRpDqBAFhe0niG">生成结果</h2>
+      <span class="sub" id="resSub" data-page-node-id="ub09LFyO1tWB0OwzO1Uk2q"></span>
+    </div>
+
+    <div class="metrics" data-page-node-id="aIQ607cts6w0i5eatu1Goe">
+      <div class="metric" data-page-node-id="EfZXz3FFqmBqvfEvVRNHoz"><div class="k" data-page-node-id="WJfUJc7Vh6PoPgS9fTNrJt">推定调性</div><div class="v" id="mKey" data-page-node-id="0fd3l4fyTLF3vtdigGlrUY">—</div></div>
+      <div class="metric" data-page-node-id="RZYFDeXnNTr4dd1FOryXf7"><div class="k" data-page-node-id="WIOpTqWTd7iuq2OBUvM2kv">速度</div><div class="v" id="mBpm" data-page-node-id="CsdvAEJCRi45b80vLkiLKW">—<small data-page-node-id="BpAHitKD8puj7ECJDM1OK2">BPM</small></div></div>
+      <div class="metric" data-page-node-id="Z2v29U3XL1YDzz4PZOWoYe"><div class="k" data-page-node-id="aNB1sSrg8tEKVpN9m7J91P">和弦数</div><div class="v" id="mChord" data-page-node-id="MHDsjZFlXsfpwpCnyAtI9P">—</div></div>
+      <div class="metric" data-page-node-id="vzyftpkdlBvYFpZZDZqtIY"><div class="k" data-page-node-id="WDr640J7yOTO7o90wixwPo">和声协和度</div><div class="v" id="mScore" data-page-node-id="BnfFRiCwMxe2IHH66ABdHF">—<small data-page-node-id="PLikG8wqiDLXNg3kiPMWn2">/100</small></div></div>
+      <div class="metric" data-page-node-id="6gaQ7lGuDRdhnsQxPzvfSs"><div class="k" data-page-node-id="4pJMH8VHGZyGTnTwUEyYsz">伴奏事件</div><div class="v" id="mVoice" data-page-node-id="N8HkvkYehb87rE3yCG7qxi">—</div></div>
+    </div>
+
+    <div class="sec-t" data-page-node-id="DuiGtGNCZAwjzuaYPlVDQa">和弦序列 · 维特比解码结果 <span class="tl" data-page-node-id="w34ZnkrDhwGx49a5DdV1nS">（点击可单独试听）</span></div>
+    <div class="chords" id="chordStrip" data-page-node-id="TSXcls6j7E9Zgy8EqYpukN"></div>
+
+    <div class="sec-t" data-page-node-id="cXKzKZQfBjg4EqDC7XIdFN">钢琴卷帘预览 · 旋律 / 和弦 / 低音</div>
+    <canvas id="rollCanvas" data-page-node-id="PUVCdkoqMtNKG45otfZO7a"></canvas>
+    <div class="legend" data-page-node-id="IWIYb8ziDIgMvWpJyE0aKz">
+      <span data-page-node-id="aNWXuhFwoY1PDM3Bt9of26"><i id="lgMel" data-page-node-id="tdtjkbClTM3djFcZ0Ik9Go"></i>旋律声部</span>
+      <span data-page-node-id="cfCpyrkvSHDFsPKPJkLVo4"><i id="lgChd" data-page-node-id="snE33pYgxLupXCNrQ25kLN"></i>和弦声部</span>
+      <span data-page-node-id="jRDjDy8UHaseVnibIeVc1f"><i id="lgBas" data-page-node-id="QwKiwrc4z9zXPX3BLGtb6y"></i>低音声部</span>
+    </div>
+
+    <div class="player" data-page-node-id="fEnyvuZ26qCNZYa1D25yEY">
+      <button class="pbtn main" id="playBtn" data-page-node-id="HGOaH37SD3pBygzMxBpD3c">播放</button>
+      <button class="pbtn" id="stopBtn" data-page-node-id="SGMMDlczmYCceHpITenzd4">停止</button>
+      <span class="slab" data-page-node-id="g9rqvHN4tHfJPq141XQkQR">速度 <input type="range" id="tempo" min="46" max="200" value="90" data-page-node-id="Q3Fdn6FrwNEnQ4MsuyKy7A"><b id="tempoV" data-page-node-id="goxYKlSwBOfHfBh5QOcXR7">90</b></span>
+      <span class="slab" data-page-node-id="hpDA1eIR5fhQYaKiGcyAF0">音量 <input type="range" id="vol" min="0" max="100" value="70" data-page-node-id="Wrg2YjhTCBcZcZ6TbHMeEM"></span>
+    </div>
+
+    <div class="sec-t" data-page-node-id="oyDXYPpjzWBybY8pTenXDz">导出到电脑</div>
+    <div class="exportbar" data-page-node-id="HW3zhFVDyDD0V5MNUr3h8W">
+      <button class="pbtn dl" id="dlMidi" data-page-node-id="ZmcO7D6xewDez86fxjKpDd">导出 MIDI（.mid）</button>
+      <button class="pbtn dl" id="dlWav" data-page-node-id="UWTDeh0R4YP5ReK64E9Tsb">导出音频（.wav）</button>
+      <button class="pbtn dl" id="dlJson" data-page-node-id="dFxgpih796RroXSB8D94b3">导出数据（.json）</button>
+      <span class="expnote" id="dlTip" data-page-node-id="WvabbxoAilPcXvwFkbHWNa">MIDI 可在任意音序器 / DAW 中二次编辑</span>
+    </div>
+
+    <div class="sec-t" data-page-node-id="ZdbQEI1MKzmheWE2DSEz6m">算法过程日志</div>
+    <div class="log" id="alog" data-page-node-id="qIe3HEoKWFVIYWA1PcdpDi"></div>
+  </section>
+
+  <section class="panel" data-page-node-id="noicVqBCkSEIzGc5TztgQq">
+    <div class="panel-head" data-page-node-id="27dklgW0gGcwfFvIyKniC7">
+      <span class="num" data-page-node-id="pOf0AEahMatKZFGqwzsSHt">05</span><h2 data-page-node-id="jZGGckQ50niy2MkI7xaO2B">词牌与宫调库</h2>
+      <span class="sub" id="cpCount" data-page-node-id="lqENpla7GTkAX09FIz4maK"></span>
+    </div>
+    <div class="searchbar" data-page-node-id="3GBpGV8iplNuLSC0SjqsD8">
+      <input id="cpSearch" placeholder="搜索词牌名 / 别名 / 字数 —— 例如「念奴娇」「百字令」「60字」" data-page-node-id="ArjTsN77F1MzSbFNiue8dR">
+      <button class="toggle" id="cpToggle" data-page-node-id="CMMwFuIwtsC2EhgHl3U0vw">展开词牌库</button>
+    </div>
+    <div class="collapse" id="cpCollapse" data-page-node-id="JkL1NT55yuGpoYfE6VzGaR"><div class="cplist" id="cpList" data-page-node-id="3PQ7C75h3hrZztqeQS2Nmc"></div></div>
+    <div class="cpdetail" id="cpDetail" data-page-node-id="13sNN6XnZIXTs79zmpxh0e"></div>
+
+    <div class="sec-t" data-page-node-id="LKUGAgRximskrnkJLSk5fU">十七宫调 · 调式与情感　<span class="tl" data-page-node-id="JzQv9s95h7bnA0D4WFaJWK">（引自元·燕南芝庵《唱论》）</span></div>
+    <div class="gdwrap" id="gdGrid" data-page-node-id="DixRbUAeAMAWjjikegDwBH"></div>
+  </section>
+
+  <footer data-page-node-id="BrxJbgpykEsN7PmO14Ogui">
+    <b data-page-node-id="afNi9NXIvZHAF8cW9TjiM7">技术路线</b>　旋律音高序列 → Krumhansl 音级轮廓调性判定 → 隐马尔可夫模型（观测：每小节音级加权直方图；状态：调内和弦）→ 维特比算法全局最优解码 → 风格化音型编排 → 多振荡器实时合成。导出使用标准 MIDI 文件格式（SMF）与 16bit PCM WAV 编码。<br data-page-node-id="FL296xMdzbZAwsHcVNwdRE">
+    <b data-page-node-id="xCnuSGrdvmg1uIiLdzB9Op">文字配乐</b>　文本 → 断句与格律指纹 → 词牌匹配（字数 / 句数 / 句式三重比对）→ 宫调推定 → 依字行腔（声调走向 + 韵脚落音 + 乐句动机）→ 写入节奏网格 → 复用同一条和声与伴奏流水线。<br data-page-node-id="EGQJzbis417ZFuoqM7FJ9L">
+    <b data-page-node-id="Q8e2dc3gnJGSDIjnDrNXMo">说明</b>　本页为纯前端静态原型，音高识别、和弦推导、文本配乐与音频合成都由浏览器实时完成，可离线运行。后续可将和弦模块平移至 Python 服务端，对齐教材 4.4 的 B/S 架构。
+  </footer>
+</div>
+
+<script src="src/js/00-music-core.js"></script>
+<script src="src/js/01-palette.js"></script>
+<script src="src/js/02-instruments.js"></script>
+<script src="src/js/03-styles.js"></script>
+<script src="src/js/04-presets-state.js"></script>
+<script src="src/js/05-theme-skin.js"></script>
+<script src="src/js/06-cards.js"></script>
+<script src="src/js/07-piano-roll.js"></script>
+<script src="src/js/08-key-detect.js"></script>
+<script src="src/js/09-hmm-viterbi.js"></script>
+<script src="src/js/10-accompaniment-patterns.js"></script>
+<script src="src/js/11-synth.js"></script>
+<script src="src/js/12-playback.js"></script>
+<script src="src/js/13-result-render.js"></script>
+<script src="src/js/14-ab-compare.js"></script>
+<script src="src/js/15-export.js"></script>
+<script src="src/js/16-import.js"></script>
+<script src="src/js/17-waveform-pitch.js"></script>
+<script src="src/js/18-recording.js"></script>
+<script src="src/js/19-generate.js"></script>
+<script src="src/js/20a-text-kb.js"></script>
+<script src="src/js/20b-tone-rhyme.js"></script>
+<script src="src/js/20c-text-parse.js"></script>
+<script src="src/js/20d-text-analyze.js"></script>
+<script src="src/js/20e-compose-melody.js"></script>
+<script src="src/js/20f-cipai-gongdiao.js"></script>
+<script src="src/js/21-bind-init.js"></script>
+<script src="src/js/22-api-client.js"></script>
+</body>
+</html>

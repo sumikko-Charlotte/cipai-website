@@ -1,0 +1,43 @@
+/* >>> file: assets/css/06-result.css */
+#result{display:none}
+#result.on{display:block;animation:rise .5s ease}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:800px){.metrics{grid-template-columns:repeat(3,1fr)}}
+.metric{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px}
+.metric .k{font-size:11px;color:var(--ink3);margin-bottom:5px}
+.metric .v{font-size:17px;font-weight:500;line-height:1.25}
+.metric .v small{font-size:11px;color:var(--ink3);font-weight:400;margin-left:3px}
+.sec-t{font-size:12px;color:var(--ink3);margin:18px 0 10px;display:flex;align-items:center;gap:9px}
+.sec-t::after{content:"";flex:1;height:1px;background:var(--border)}
+.sec-t .tl{color:var(--ink2)}
+.chords{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px}
+.cblk{flex:0 0 auto;min-width:74px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--surface2);padding:10px 11px;text-align:center;transition:all .22s;cursor:pointer}
+.cblk:hover{border-color:var(--border-str)}
+.cblk.now{border-color:var(--accent);background:var(--accentSoft);transform:translateY(-2px)}
+.cblk .cn{font-size:16px;font-weight:500;line-height:1.25}
+.cblk .cr{font-size:10.5px;color:var(--accent);margin-top:3px}
+.cblk .cb{font-size:10px;color:var(--ink3);margin-top:2px}
+#rollCanvas{width:100%;height:210px;display:block;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.player{display:flex;align-items:center;gap:12px;margin-top:13px;flex-wrap:wrap}
+.pbtn{font-family:inherit;font-size:12.5px;cursor:pointer;padding:9px 18px;border-radius:var(--radius-sm);
+  border:1px solid var(--border-str);background:transparent;color:var(--ink);transition:all .22s}
+.pbtn:hover{border-color:var(--accent);color:var(--accent)}
+.pbtn.main{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.pbtn.dl{background:var(--accentSoft);border-color:var(--border-str);color:var(--accent)}
+.slab{font-size:11.5px;color:var(--ink3);display:flex;align-items:center;gap:8px}
+input[type=range]{-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;background:var(--border-str);outline:none;width:100px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border:none;border-radius:50%;background:var(--accent);cursor:pointer}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink3);margin-top:9px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.exportbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.expnote{font-size:11.5px;color:var(--ink3)}
+.log{margin-top:6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);padding:13px 15px;max-height:180px;overflow-y:auto}
+.log p{font-family:Consolas,"Microsoft YaHei",monospace;font-size:11.5px;line-height:1.95;color:var(--ink2)}
+.log p b{color:var(--accent);font-weight:500}
+.log p.dim{color:var(--ink3)}
+.notice{font-size:12px;color:var(--accent);background:var(--accentSoft);border:1px solid var(--border-str);
+  border-radius:var(--radius-sm);padding:10px 13px;margin-top:12px;line-height:1.7;display:none}
+.notice.on{display:block}

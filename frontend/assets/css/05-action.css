@@ -1,0 +1,14 @@
+/* >>> file: assets/css/05-action.css */
+.action{display:flex;align-items:center;gap:16px;margin:20px 0;flex-wrap:wrap}
+.btn-go{font-family:inherit;font-size:14.5px;cursor:pointer;border:none;padding:14px 38px;border-radius:var(--radius-sm);
+  background:var(--accent);color:var(--bg);letter-spacing:.04em;transition:all .25s;box-shadow:var(--card-shadow)}
+.btn-go:hover{opacity:.88;transform:translateY(-1px)}
+.btn-go:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.prog{display:flex;gap:14px;flex-wrap:wrap;flex:1}
+.prog .pi{font-size:11.5px;color:var(--ink3);display:flex;align-items:center;gap:6px;opacity:.4;transition:all .3s}
+.prog .pi.act{opacity:1;color:var(--accent)}
+.prog .pi.fin{opacity:1;color:var(--ink2)}
+.prog .pi .kd{width:13px;height:13px;border-radius:50%;border:1.5px solid currentColor;flex:0 0 13px}
+.prog .pi.act .kd{border-top-color:transparent;animation:spin .7s linear infinite}
+.prog .pi.fin .kd{border-color:var(--accent);background:var(--accent)}
+@keyframes spin{to{transform:rotate(360deg)}}

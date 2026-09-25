@@ -1,0 +1,32 @@
+/* >>> file: assets/css/01-base.css */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+:root{--radius:14px;--radius-sm:9px;--card-shadow:none;--font:system-ui,-apple-system,"Microsoft YaHei",sans-serif}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--ink);
+  min-height:100%;position:relative;overflow-x:hidden;
+  transition:background .5s ease,color .5s ease;-webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 520px at 12% -8%, var(--glow1), transparent 62%),
+             radial-gradient(760px 480px at 92% 4%, var(--glow2), transparent 58%);
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:var(--texture-op);
+  background-image:var(--texture);background-size:var(--texture-size);
+}
+.wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:26px 26px 64px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:46px;height:46px;flex:0 0 46px;border-radius:var(--radius-sm);background:var(--accent);color:var(--bg);
+  display:flex;align-items:center;justify-content:center;font-size:22px;transition:background .5s,border-radius .5s}
+.brand h1{font-size:20px;font-weight:500}
+.brand p{font-size:11.5px;color:var(--ink3);margin-top:3px;letter-spacing:.08em}
+.steps{display:flex;flex-wrap:wrap}
+.steps .st{font-size:12.5px;color:var(--ink3);padding:7px 14px;border:1px solid var(--border);border-left:none;transition:all .3s}
+.steps .st:first-child{border-left:1px solid var(--border);border-radius:var(--radius-sm) 0 0 var(--radius-sm)}
+.steps .st:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.steps .st.on{background:var(--accentSoft);color:var(--accent);border-color:var(--border-str)}
+.steps .st.done{color:var(--ink2)}
