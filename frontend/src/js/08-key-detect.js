@@ -24,8 +24,10 @@ function detectKey(melody){
   const h = pitchHistogram(melody);
   let best = {root:0, mode:'major', score:-2};
   for(let r = 0; r < 12; r++){
-    const cm = correlate(h, KRUMA_MAJ.map((_,i) => h[mod(i - r)]));
-    const cn = correlate(h, KRUMA_MIN.map((_,i) => h[mod(i - r)]));
+    const shiftedMaj = KRUMA_MAJ.map((_,i) => KRUMA_MAJ[mod(i-r)]);
+    const shiftedMin = KRUMA_MIN.map((_,i) => KRUMA_MIN[mod(i-r)]);
+    const cm = correlate(h, shiftedMaj);
+    const cn = correlate(h, shiftedMin);
     if(cm > best.score) best = {root:r, mode:'major', score:cm};
     if(cn > best.score) best = {root:r, mode:'minor', score:cn};
   }
