@@ -2,15 +2,21 @@
 /* ============================================================
    21. 事件绑定与初始化
    ============================================================ */
+function switchTab(key){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === key));
+  document.querySelectorAll('.tabbody').forEach(t => t.classList.remove('on'));
+  document.getElementById('tab-' + key).classList.add('on');
+  setTimeout(() => { drawIdleWave(); if(state.events.length) drawRoll(-1); }, 30);
+}
 document.getElementById('tabs').addEventListener('click', e => {
   const b = e.target.closest('.tab');
   if(!b) return;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t === b));
-  document.querySelectorAll('.tabbody').forEach(t => t.classList.remove('on'));
-  document.getElementById('tab-' + b.dataset.tab).classList.add('on');
-  setTimeout(() => { drawIdleWave(); if(state.events.length) drawRoll(-1); }, 30);
+  switchTab(b.dataset.tab);
 });
 document.getElementById('recBtn').onclick = toggleRec;
+document.getElementById('humEditBtn').onclick = jumpToEdit;
+document.getElementById('humSaveLocal').onclick = saveHumToLocal;
+document.getElementById('humExport').onclick = exportHum;
 
 const dz = document.getElementById('dropzone');
 dz.onclick = () => document.getElementById('fileInput').click();
@@ -51,6 +57,7 @@ renderTextOptions();
 renderCiPaiLib('');
 renderGongLib();
 updateTextPlaceholder();
+renderHumLib();
 document.getElementById('textIn').value = DEMO_TEXT.ci;
 logLine('就绪。录入旋律 → 选风格 → 配乐器 → 生成，然后可导出 MIDI / WAV / JSON。', true);
 logLine('文字配乐：把诗词或歌词粘进「文字配乐」，或直接在下方词牌库里搜词牌与宫调。', true);

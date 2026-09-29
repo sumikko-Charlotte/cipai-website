@@ -75,6 +75,23 @@ body::after{
 @keyframes blink{50%{opacity:.15}}
 .rec-hint{font-size:12px;color:var(--ink3);margin-top:10px;line-height:1.8}
 
+/* ---- 哼唱结果 / 录音保存 ---- */
+.hum-result{display:none;align-items:center;justify-content:center;gap:12px;margin-top:12px;font-size:13px;color:var(--ink2)}
+.hum-result.on{display:flex}
+.hum-save{display:none;margin-top:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface2);padding:12px;text-align:left}
+.hum-save.on{display:block}
+.hum-save audio{width:100%;height:34px;display:block}
+.hs-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.hs-tip{font-size:11.5px;color:var(--ink3);margin-top:8px;line-height:1.7}
+.hum-lib{margin-top:10px;text-align:left}
+.hum-lib:empty{display:none}
+.hl-item{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;margin-top:8px;background:var(--surface2)}
+.hl-item .nm{flex:1;font-size:12.5px;color:var(--ink2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hl-item audio{height:28px;width:180px;flex-shrink:0}
+.hl-item .chip{flex-shrink:0}
+@keyframes humflash{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 3px var(--accent)}}
+.roll.flash{animation:humflash .7s ease 3}
+
 .dropzone{border:1px dashed var(--border-str);border-radius:var(--radius);padding:30px 18px;text-align:center;
   background:var(--surface2);cursor:pointer;transition:all .25s}
 .dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accentSoft)}
@@ -313,6 +330,16 @@ footer b{color:var(--ink2);font-weight:500}
           </div>
           <button class="recbtn" id="recBtn" data-page-node-id="yDUtmRGO0JH4l7jSpj39vR"><span class="dot" data-page-node-id="HiFcySDc8FGUgVTxvXI4z8"></span><span id="recTxt" data-page-node-id="KZyc0kWXObpjWPBEvTnl0U">按下开始哼唱</span></button>
           <p class="rec-hint" id="recHint" data-page-node-id="Cp13lt9Cj8ugoTpGDmtTDb">对着麦克风哼一段旋律。系统以自相关算法逐帧追踪音高，<br data-page-node-id="z3pI4ykq98fP316EtyOFFE">结束后自动切分成音符并量化到节奏网格，无需任何乐理基础。</p>
+          <div class="hum-result" id="humResult"><span>—</span><button class="chip" id="humEditBtn">手动编辑微调 →</button></div>
+          <div class="hum-save" id="humSave">
+            <audio id="humAudio" controls preload="metadata"></audio>
+            <div class="hs-btns">
+              <button class="chip" id="humSaveLocal">存入本地库（长久保存）</button>
+              <button class="chip" id="humExport">导出音频文件</button>
+            </div>
+            <div class="hs-tip">暂存：本次录音保留在页面里可随时重听，关闭页面即消失；「存入本地库」写入浏览器 IndexedDB，刷新或重开浏览器后仍能播放、导出。</div>
+          </div>
+          <div class="hum-lib" id="humLib"></div>
         </div>
       </div>
 
@@ -880,8 +907,10 @@ function detectKey(melody){
   const h = pitchHistogram(melody);
   let best = {root:0, mode:'major', score:-2};
   for(let r = 0; r < 12; r++){
-    const cm = correlate(h, KRUMA_MAJ.map((_,i) => h[mod(i - r)]));
-    const cn = correlate(h, KRUMA_MIN.map((_,i) => h[mod(i - r)]));
+    const shiftedMaj = KRUMA_MAJ.map((_,i) => KRUMA_MAJ[mod(i-r)]);
+    const shiftedMin = KRUMA_MIN.map((_,i) => KRUMA_MIN[mod(i-r)]);
+    const cm = correlate(h, shiftedMaj);
+    const cn = correlate(h, shiftedMin);
     if(cm > best.score) best = {root:r, mode:'major', score:cm};
     if(cn > best.score) best = {root:r, mode:'minor', score:cn};
   }
@@ -1732,7 +1761,17 @@ async function toggleRec(){
       document.getElementById('lvlBar').style.width = '0%';
       hint.innerHTML = '录制完成，正在做音高追踪与音符切分…';
       const blob = new Blob(chunks, {type: chunks[0] ? chunks[0].type : 'audio/webm'});
-      await analyzeAudioBlob(blob, '哼唱录音');
+      /* 暂存：录音留在页面里，可随时重听 */
+      if(lastHumURL) URL.revokeObjectURL(lastHumURL);
+      lastHumBlob = blob;
+      lastHumName = '哼唱 ' + new Date().toLocaleString('zh-CN', {hour12:false});
+      lastHumURL = URL.createObjectURL(blob);
+      const au = document.getElementById('humAudio');
+      if(au){
+        au.src = lastHumURL;
+        document.getElementById('humSave').classList.add('on');
+      }
+      await analyzeAudioBlob(blob, '哼唱录音', true);
     };
     mediaRec.start();
     btn.classList.add('rec');
@@ -1744,7 +1783,7 @@ async function toggleRec(){
   }
 }
 
-async function analyzeAudioBlob(blob, source){
+async function analyzeAudioBlob(blob, source, isHum){
   try{
     const ctx = ensureCtx();
     const arr = await blob.arrayBuffer();
@@ -1761,6 +1800,13 @@ async function analyzeAudioBlob(blob, source){
       if(cv2) cv2.style.display = 'block';
       applyDetectedMelody(notes);
       drawWave(data);
+      if(isHum){
+        const hr = document.getElementById('humResult');
+        if(hr){
+          hr.querySelector('span').textContent = '从哼唱中识别出 ' + notes.length + ' 个音符，已量化到节奏网格';
+          hr.classList.add('on');
+        }
+      }
       setNotice('从' + source + '中识别出 ' + notes.length + ' 个音符，已量化到 16 格节奏网格。可在「手动编辑」里微调。');
     } else {
       setNotice('音高追踪结果不理想（可能噪声较大或音域超出范围）。已切换为示例旋律，你可以手动修正。');
@@ -1808,6 +1854,125 @@ function handleFile(file){
   } else {
     analyzeAudioBlob(file, '音频文件「' + file.name + '」');
   }
+}
+
+
+/* ---------- 哼唱录音保存：暂存 / 本地库（IndexedDB）/ 导出 ---------- */
+let lastHumBlob = null, lastHumURL = null, lastHumName = '';
+const HUM_DB = 'hum-recordings', HUM_STORE = 'recs';
+let humDb = null;
+
+function idbOpen(){
+  return new Promise((res, rej) => {
+    if(humDb) return res(humDb);
+    const rq = indexedDB.open(HUM_DB, 1);
+    rq.onupgradeneeded = () => { rq.result.createObjectStore(HUM_STORE, {keyPath:'id', autoIncrement:true}); };
+    rq.onsuccess = () => { humDb = rq.result; res(humDb); };
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function humLibAll(){
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const rq = db.transaction(HUM_STORE).objectStore(HUM_STORE).getAll();
+    rq.onsuccess = () => res(rq.result || []);
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+function humLibPut(rec){
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const rq = db.transaction(HUM_STORE, 'readwrite').objectStore(HUM_STORE).put(rec);
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+function humLibDel(id){
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const rq = db.transaction(HUM_STORE, 'readwrite').objectStore(HUM_STORE).delete(id);
+    rq.onsuccess = () => res();
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+
+function downloadBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ext = (blob.type && blob.type.indexOf('ogg') !== -1) ? '.ogg' : '.webm';
+  a.href = url;
+  a.download = name.replace(/[\\/:*?"<>|]/g, '_') + ext;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function exportHum(){
+  if(!lastHumBlob){ setNotice('还没有可导出的录音，先录一段哼唱。'); return; }
+  downloadBlob(lastHumBlob, lastHumName);
+}
+
+async function saveHumToLocal(){
+  if(!lastHumBlob){ setNotice('还没有可保存的录音，先录一段哼唱。'); return; }
+  try{
+    await humLibPut({name:lastHumName, ts:Date.now(), blob:lastHumBlob});
+    renderHumLib();
+    setNotice('已存入本地录音库「' + lastHumName + '」——刷新或重开浏览器后仍在，可随时重听或导出。');
+  }catch(e){
+    setNotice('存入本地库失败（浏览器可能禁用了本地存储）：' + (e && e.message ? e.message : e));
+  }
+}
+
+async function renderHumLib(){
+  const box = document.getElementById('humLib');
+  if(!box) return;
+  let list = [];
+  try{ list = await humLibAll(); }catch(e){ box.innerHTML = ''; return; }
+  box.innerHTML = '';
+  if(!list.length) return;
+  const cap = document.createElement('div');
+  cap.className = 'hs-tip';
+  cap.textContent = '本地录音库（保存在浏览器 IndexedDB，共 ' + list.length + ' 条，刷新后仍在）：';
+  box.appendChild(cap);
+  list.sort((a, b) => b.ts - a.ts).forEach(rec => {
+    const row = document.createElement('div');
+    row.className = 'hl-item';
+    const nm = document.createElement('span');
+    nm.className = 'nm';
+    nm.textContent = rec.name + ' · ' + (rec.blob.size / 1048576).toFixed(1) + ' MB';
+    const au = document.createElement('audio');
+    au.controls = true;
+    au.preload = 'metadata';
+    au.src = URL.createObjectURL(rec.blob);
+    const exp = document.createElement('button');
+    exp.className = 'chip';
+    exp.textContent = '导出';
+    exp.onclick = () => downloadBlob(rec.blob, rec.name);
+    const del = document.createElement('button');
+    del.className = 'chip';
+    del.textContent = '删除';
+    del.onclick = async () => {
+      await humLibDel(rec.id);
+      URL.revokeObjectURL(au.src);
+      renderHumLib();
+      setNotice('已从本地库删除「' + rec.name + '」。');
+    };
+    row.appendChild(nm);
+    row.appendChild(au);
+    row.appendChild(exp);
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+/* 识别结果 → 手动编辑：切选项卡、滚动到网格、闪烁提示 */
+function jumpToEdit(){
+  switchTab('edit');
+  setTimeout(() => {
+    const r = document.querySelector('#tab-edit .roll');
+    if(!r) return;
+    r.scrollIntoView({behavior:'smooth', block:'center'});
+    r.classList.add('flash');
+    setTimeout(() => r.classList.remove('flash'), 2300);
+  }, 80);
 }
 
 /* ============================================================
@@ -2400,10 +2565,45 @@ function buildPhrases(a){
   return {phrases, mainRhyme:best >= 2 ? main : '', rhymeCount:cnt};
 }
 
-/* 依字行腔：
-   平声走级进、仄声走跳进；去声偏下行、上声偏上行；
-   押韵句落主音、非韵句落属音；句间以「过片」加长停顿；
-   同一韵部的落句复用上一句的终止三音型（韵脚呼应）。 */
+/* 依字行腔 + 动机发展：
+   首句（≥4 字）的音程走向记为「动机」，后续句按概率对它做原样重复、
+   模进（整体平移 2–3 个音级）、倒影（音程取反）或加花变奏，套不上的句子
+   回落到弧线法；平声走级进、仄声走跳进；押韵句落主音、非韵句落属音；
+   同一韵部的落句复用上一句的终止三音型（韵脚呼应）。
+   节奏在「一字一音」骨架上加入：句中切分长音（2 格）、押韵句末附点
+   （3–4 格）、约 18% 的句子弱起错位（晚半拍进）、句间随机气口。 */
+function motifPhrase(motif, N, startIdx, endIdx, mode, poolLen){
+  const src = motif.deltas;
+  if(!src.some(d => d !== 0)) return null;          // 动机太平则不用
+  const seqShift = (Math.random() < .5 ? -1 : 1) * (2 + (Math.random() < .5 ? 1 : 0));
+  const idxs = [];
+  let cur = clamp(startIdx + (mode === 'seq' ? seqShift : 0), 0, poolLen - 1);
+  for(let k = 0; k < N; k++){
+    if(k > 0){
+      let d = src[(k - 1) % src.length];
+      if(mode === 'inv') d = -d;
+      else if(mode === 'var' && Math.random() < .4) d += (Math.random() < .5 ? -1 : 1);
+      cur = clamp(cur + d, 0, poolLen - 1);
+    }
+    idxs.push(cur);
+  }
+  idxs[N - 1] = clamp(endIdx, 0, poolLen - 1);      // 终止式不变：句末严格落落音
+  return idxs;
+}
+
+function rhythmFor(N, pi, nPh, isRh, zeFin, longOnAccent){
+  const durs = new Array(N).fill(1);
+  if(N >= 4 && Math.random() < .3){
+    /* 切分：句中随机一字拖长至 2 格，跨过拍点 */
+    const k = 1 + Math.floor(Math.random() * (N - 2));
+    durs[k] = 2;
+  }
+  let fin = isRh ? (zeFin ? 2 : 3) : (zeFin ? (longOnAccent ? 3 : 1) : 2);
+  if(isRh && !zeFin && (pi === nPh - 1 || Math.random() < .35)) fin = 4;   // 附点式落句
+  durs[N - 1] = fin;
+  return durs;
+}
+
 function composeMelody(pack, opt){
   const sc = SCALES[opt.scaleKey];
   const pool = scalePoolOf(opt.rootMidi, opt.scaleKey, opt.lo, opt.hi);
@@ -2421,6 +2621,9 @@ function composeMelody(pack, opt){
   const CAP = 196;
   const notes = [], tails = {};
   let pos = 0, truncated = false, rhLines = 0, leapCount = 0, stepCount = 0, pauseCount = 0;
+  let weakCount = 0, dotCount = 0, breathCount = 0;
+  const motifStats = {rep:0, seq:0, inv:0, var:0, fresh:0};
+  let motif = null;
   const longOnAccent = (opt.lang === 'en');   // 英文重读音节落长音，中文仄声字落短音
   const nPh = pack.phrases.length;
 
@@ -2441,30 +2644,50 @@ function composeMelody(pack, opt){
     const baseStart = (pi === 0) ? tonicIdx : (isRh ? tonicIdx + 2 : domIdx);
     const startIdx = clamp(baseStart + lineReg + sh, 0, pool.length - 1);
 
-    const idxs = [];
-    let prev = startIdx;
-    for(let i = 0; i < N; i++){
-      const u = units[i];
-      const arc = N === 1 ? 1 : i / (N - 1);
-      /* 目标轮廓：在起句音与落句音之间走一条弧线，平声略上扬、仄声略下抑 */
-      let vib = Math.sin(Math.PI * arc) * (sc.five ? 2.4 : 3.0) * (opt.leap || 1);
-      vib *= u.accent ? -0.78 : 1;
-      vib += (Math.random() - .5) * (u.accent ? .6 : 1.15);
-      const want = startIdx + (endIdx - startIdx) * arc + vib;
-      let idx;
-      if(i === N - 1){
-        idx = endIdx;                                     // 句末严格落到落音
-      } else {
-        /* 步幅由声调决定：平声级进（1 度）、仄声跳进（2 度，偶作 3 度） */
-        const mag = u.accent ? 2 : 1;
-        let dir = want > prev ? 1 : (want < prev ? -1 : (u.accent ? 1 : -1));
-        if(i > 0 && Math.abs(want - prev) > mag + 1 && Math.random() < .3) dir = -dir;
-        idx = prev + dir * mag;
-        if(Math.abs(want - idx) >= 4 && Math.random() < .45) idx = prev + dir * (mag + 1);
+    /* 弱起：约 18% 的句子整体晚半拍进入，与 4/4 伴奏形成切分错位 */
+    if(pi > 0 && N >= 3 && Math.random() < .18){ pos += 1; weakCount++; }
+
+    /* 取音：优先动机发展，套不上再用弧线法 */
+    const durs = rhythmFor(N, pi, nPh, isRh, zeFin, longOnAccent);
+    if(durs[N - 1] >= 3) dotCount++;
+    let idxs = null;
+    if(motif && pi > 0 && N >= 3 && Math.random() < (isRh ? .5 : .65)){
+      const roll = Math.random();
+      const mode = roll < .35 ? 'rep' : (roll < .6 ? 'seq' : (roll < .8 ? 'inv' : 'var'));
+      idxs = motifPhrase(motif, N, startIdx, endIdx, mode, pool.length);
+      if(idxs) motifStats[mode]++;
+    }
+    if(!idxs){
+      motifStats.fresh++;
+      idxs = [];
+      let prev = startIdx;
+      for(let i = 0; i < N; i++){
+        const u = units[i];
+        const arc = N === 1 ? 1 : i / (N - 1);
+        /* 目标轮廓：在起句音与落句音之间走一条弧线，平声略上扬、仄声略下抑 */
+        let vib = Math.sin(Math.PI * arc) * (sc.five ? 2.4 : 3.0) * (opt.leap || 1);
+        vib *= u.accent ? -0.78 : 1;
+        vib += (Math.random() - .5) * (u.accent ? .6 : 1.15);
+        const want = startIdx + (endIdx - startIdx) * arc + vib;
+        let idx;
+        if(i === N - 1){
+          idx = endIdx;                                     // 句末严格落到落音
+        } else {
+          /* 步幅由声调决定：平声级进（1 度）、仄声跳进（2 度，偶作 3 度） */
+          const mag = u.accent ? 2 : 1;
+          let dir = want > prev ? 1 : (want < prev ? -1 : (u.accent ? 1 : -1));
+          if(i > 0 && Math.abs(want - prev) > mag + 1 && Math.random() < .3) dir = -dir;
+          idx = prev + dir * mag;
+          if(Math.abs(want - idx) >= 4 && Math.random() < .45) idx = prev + dir * (mag + 1);
+        }
+        idx = clamp(idx, 0, pool.length - 1);
+        idxs.push(idx);
+        prev = idx;
       }
-      idx = clamp(idx, 0, pool.length - 1);
-      idxs.push(idx);
-      prev = idx;
+    }
+    if(pi === 0 && N >= 4 && !motif){
+      motif = {deltas:[]};
+      for(let k = 1; k < N; k++) motif.deltas.push(idxs[k] - idxs[k - 1]);
     }
     if(isRh){
       rhLines++;
@@ -2480,21 +2703,22 @@ function composeMelody(pack, opt){
     }
     for(let i = 0; i < N; i++){
       if(pos > CAP - 2){ truncated = true; break; }
-      const u = units[i], isLast = (i === N - 1);
-      let dur = 1;
-      /* 平声长、仄声短：押韵句末平声延至 3 格、仄声 2 格；非韵句平 2 / 仄 1 格
-         （英文重读音节反其道而行，落长音） */
-      if(isLast) dur = isRh ? (u.accent ? 2 : 3) : (u.accent ? (longOnAccent ? 3 : 1) : 2);
+      const u = units[i];
+      const dur = durs[i];
       notes.push({pitch:pool[idxs[i]], start:pos, dur, voice:'melody', ch:u.ch});
       if(Math.abs(idxs[i] - (idxs[i - 1] === undefined ? idxs[i] : idxs[i - 1])) >= 2) leapCount++; else stepCount++;
       pos += dur;
     }
     pos += 1;
+    /* 气口：非过片的句间随机多停半拍 */
+    if(pi < nPh - 1 && !ph.gap && Math.random() < .2){ pos += 1; breathCount++; }
   }
   return {
     notes, totalSteps:Math.min(pos, CAP), truncated, poolLen:pool.length,
     tonicMidi:pool[tonicIdx], domMidi:pool[domIdx], tonicPc,
-    rhLines, leapCount, stepCount, pauseCount, phrases:pack.phrases.length - (truncated ? 1 : 0)
+    rhLines, leapCount, stepCount, pauseCount, breathCount,
+    weakCount, dotCount, motifStats,
+    phrases:pack.phrases.length - (truncated ? 1 : 0)
   };
 }
 
@@ -2537,6 +2761,12 @@ async function composeText(){
     '（' + range.name + '），可用音级 ' + mel.poolLen + ' 个，主音 ' + PC[mod(mel.tonicMidi)] + '，属音 ' + PC[mod(mel.domMidi)]);
   log.push('依字行腔：平声级进 ' + mel.stepCount + ' 处、仄声跳进 ' + mel.leapCount +
     ' 处；押韵句 ' + mel.rhLines + ' 句落主音，其余落属音；过片停顿 ' + mel.pauseCount + ' 处');
+  if(mel.motifStats){
+    const ms = mel.motifStats;
+    log.push('动机发展：首句动机被后续句引用 ' + (ms.rep + ms.seq + ms.inv + ms.var) + ' 次' +
+      '（重复 ' + ms.rep + ' / 模进 ' + ms.seq + ' / 倒影 ' + ms.inv + ' / 变奏 ' + ms.var + '），自由展开 ' + ms.fresh + ' 句；' +
+      '弱起切分 ' + mel.weakCount + ' 处、附点落句 ' + mel.dotCount + ' 处、句间气口 ' + mel.breathCount + ' 处');
+  }
   if(mel.truncated) log.push('文本较长，已按 196 格上限截断（如需全篇请分段生成）');
 
   resetGridCols();
@@ -2556,7 +2786,7 @@ async function composeText(){
 
   const secTag = (a.kind === 'lyric' || a.kind === 'en')
     ? '（' + a.sections.map((s, i) => (s.label || ('段' + (i + 1)))).join(' / ') + '，副歌音区抬高 2 个音级）' : '';
-  log.push('词曲对位：每字/每音节 1 个八分音符，句末平声延长至 2–3 格' + secTag);
+  log.push('词曲对位：以八分音符为骨架，一字/一音节一音；句中偶发切分长音，押韵句末附点延至 3–4 格' + secTag);
   log.push('写入节奏网格：<b>' + GRID_COLS + '</b> 格 × ' + Math.ceil(GRID_COLS / 4) +
     ' 小节，速度 ' + bpm + ' BPM；风格自动切到 <b>' + STYLES[styleKey].name + '</b>');
 
@@ -2734,15 +2964,21 @@ document.getElementById('cpToggle').onclick = e => {
 /* ============================================================
    21. 事件绑定与初始化
    ============================================================ */
+function switchTab(key){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === key));
+  document.querySelectorAll('.tabbody').forEach(t => t.classList.remove('on'));
+  document.getElementById('tab-' + key).classList.add('on');
+  setTimeout(() => { drawIdleWave(); if(state.events.length) drawRoll(-1); }, 30);
+}
 document.getElementById('tabs').addEventListener('click', e => {
   const b = e.target.closest('.tab');
   if(!b) return;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t === b));
-  document.querySelectorAll('.tabbody').forEach(t => t.classList.remove('on'));
-  document.getElementById('tab-' + b.dataset.tab).classList.add('on');
-  setTimeout(() => { drawIdleWave(); if(state.events.length) drawRoll(-1); }, 30);
+  switchTab(b.dataset.tab);
 });
 document.getElementById('recBtn').onclick = toggleRec;
+document.getElementById('humEditBtn').onclick = jumpToEdit;
+document.getElementById('humSaveLocal').onclick = saveHumToLocal;
+document.getElementById('humExport').onclick = exportHum;
 
 const dz = document.getElementById('dropzone');
 dz.onclick = () => document.getElementById('fileInput').click();
@@ -2783,6 +3019,7 @@ renderTextOptions();
 renderCiPaiLib('');
 renderGongLib();
 updateTextPlaceholder();
+renderHumLib();
 document.getElementById('textIn').value = DEMO_TEXT.ci;
 logLine('就绪。录入旋律 → 选风格 → 配乐器 → 生成，然后可导出 MIDI / WAV / JSON。', true);
 logLine('文字配乐：把诗词或歌词粘进「文字配乐」，或直接在下方词牌库里搜词牌与宫调。', true);

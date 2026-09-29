@@ -59,6 +59,16 @@
           </div>
           <button class="recbtn" id="recBtn" data-page-node-id="yDUtmRGO0JH4l7jSpj39vR"><span class="dot" data-page-node-id="HiFcySDc8FGUgVTxvXI4z8"></span><span id="recTxt" data-page-node-id="KZyc0kWXObpjWPBEvTnl0U">按下开始哼唱</span></button>
           <p class="rec-hint" id="recHint" data-page-node-id="Cp13lt9Cj8ugoTpGDmtTDb">对着麦克风哼一段旋律。系统以自相关算法逐帧追踪音高，<br data-page-node-id="z3pI4ykq98fP316EtyOFFE">结束后自动切分成音符并量化到节奏网格，无需任何乐理基础。</p>
+          <div class="hum-result" id="humResult"><span>—</span><button class="chip" id="humEditBtn">手动编辑微调 →</button></div>
+          <div class="hum-save" id="humSave">
+            <audio id="humAudio" controls preload="metadata"></audio>
+            <div class="hs-btns">
+              <button class="chip" id="humSaveLocal">存入本地库（长久保存）</button>
+              <button class="chip" id="humExport">导出音频文件</button>
+            </div>
+            <div class="hs-tip">暂存：本次录音保留在页面里可随时重听，关闭页面即消失；「存入本地库」写入浏览器 IndexedDB，刷新或重开浏览器后仍能播放、导出。</div>
+          </div>
+          <div class="hum-lib" id="humLib"></div>
         </div>
       </div>
 

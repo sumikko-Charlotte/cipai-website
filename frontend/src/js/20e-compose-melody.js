@@ -54,10 +54,45 @@ function buildPhrases(a){
   return {phrases, mainRhyme:best >= 2 ? main : '', rhymeCount:cnt};
 }
 
-/* 依字行腔：
-   平声走级进、仄声走跳进；去声偏下行、上声偏上行；
-   押韵句落主音、非韵句落属音；句间以「过片」加长停顿；
-   同一韵部的落句复用上一句的终止三音型（韵脚呼应）。 */
+/* 依字行腔 + 动机发展：
+   首句（≥4 字）的音程走向记为「动机」，后续句按概率对它做原样重复、
+   模进（整体平移 2–3 个音级）、倒影（音程取反）或加花变奏，套不上的句子
+   回落到弧线法；平声走级进、仄声走跳进；押韵句落主音、非韵句落属音；
+   同一韵部的落句复用上一句的终止三音型（韵脚呼应）。
+   节奏在「一字一音」骨架上加入：句中切分长音（2 格）、押韵句末附点
+   （3–4 格）、约 18% 的句子弱起错位（晚半拍进）、句间随机气口。 */
+function motifPhrase(motif, N, startIdx, endIdx, mode, poolLen){
+  const src = motif.deltas;
+  if(!src.some(d => d !== 0)) return null;          // 动机太平则不用
+  const seqShift = (Math.random() < .5 ? -1 : 1) * (2 + (Math.random() < .5 ? 1 : 0));
+  const idxs = [];
+  let cur = clamp(startIdx + (mode === 'seq' ? seqShift : 0), 0, poolLen - 1);
+  for(let k = 0; k < N; k++){
+    if(k > 0){
+      let d = src[(k - 1) % src.length];
+      if(mode === 'inv') d = -d;
+      else if(mode === 'var' && Math.random() < .4) d += (Math.random() < .5 ? -1 : 1);
+      cur = clamp(cur + d, 0, poolLen - 1);
+    }
+    idxs.push(cur);
+  }
+  idxs[N - 1] = clamp(endIdx, 0, poolLen - 1);      // 终止式不变：句末严格落落音
+  return idxs;
+}
+
+function rhythmFor(N, pi, nPh, isRh, zeFin, longOnAccent){
+  const durs = new Array(N).fill(1);
+  if(N >= 4 && Math.random() < .3){
+    /* 切分：句中随机一字拖长至 2 格，跨过拍点 */
+    const k = 1 + Math.floor(Math.random() * (N - 2));
+    durs[k] = 2;
+  }
+  let fin = isRh ? (zeFin ? 2 : 3) : (zeFin ? (longOnAccent ? 3 : 1) : 2);
+  if(isRh && !zeFin && (pi === nPh - 1 || Math.random() < .35)) fin = 4;   // 附点式落句
+  durs[N - 1] = fin;
+  return durs;
+}
+
 function composeMelody(pack, opt){
   const sc = SCALES[opt.scaleKey];
   const pool = scalePoolOf(opt.rootMidi, opt.scaleKey, opt.lo, opt.hi);
@@ -75,6 +110,9 @@ function composeMelody(pack, opt){
   const CAP = 196;
   const notes = [], tails = {};
   let pos = 0, truncated = false, rhLines = 0, leapCount = 0, stepCount = 0, pauseCount = 0;
+  let weakCount = 0, dotCount = 0, breathCount = 0;
+  const motifStats = {rep:0, seq:0, inv:0, var:0, fresh:0};
+  let motif = null;
   const longOnAccent = (opt.lang === 'en');   // 英文重读音节落长音，中文仄声字落短音
   const nPh = pack.phrases.length;
 
@@ -95,30 +133,50 @@ function composeMelody(pack, opt){
     const baseStart = (pi === 0) ? tonicIdx : (isRh ? tonicIdx + 2 : domIdx);
     const startIdx = clamp(baseStart + lineReg + sh, 0, pool.length - 1);
 
-    const idxs = [];
-    let prev = startIdx;
-    for(let i = 0; i < N; i++){
-      const u = units[i];
-      const arc = N === 1 ? 1 : i / (N - 1);
-      /* 目标轮廓：在起句音与落句音之间走一条弧线，平声略上扬、仄声略下抑 */
-      let vib = Math.sin(Math.PI * arc) * (sc.five ? 2.4 : 3.0) * (opt.leap || 1);
-      vib *= u.accent ? -0.78 : 1;
-      vib += (Math.random() - .5) * (u.accent ? .6 : 1.15);
-      const want = startIdx + (endIdx - startIdx) * arc + vib;
-      let idx;
-      if(i === N - 1){
-        idx = endIdx;                                     // 句末严格落到落音
-      } else {
-        /* 步幅由声调决定：平声级进（1 度）、仄声跳进（2 度，偶作 3 度） */
-        const mag = u.accent ? 2 : 1;
-        let dir = want > prev ? 1 : (want < prev ? -1 : (u.accent ? 1 : -1));
-        if(i > 0 && Math.abs(want - prev) > mag + 1 && Math.random() < .3) dir = -dir;
-        idx = prev + dir * mag;
-        if(Math.abs(want - idx) >= 4 && Math.random() < .45) idx = prev + dir * (mag + 1);
+    /* 弱起：约 18% 的句子整体晚半拍进入，与 4/4 伴奏形成切分错位 */
+    if(pi > 0 && N >= 3 && Math.random() < .18){ pos += 1; weakCount++; }
+
+    /* 取音：优先动机发展，套不上再用弧线法 */
+    const durs = rhythmFor(N, pi, nPh, isRh, zeFin, longOnAccent);
+    if(durs[N - 1] >= 3) dotCount++;
+    let idxs = null;
+    if(motif && pi > 0 && N >= 3 && Math.random() < (isRh ? .5 : .65)){
+      const roll = Math.random();
+      const mode = roll < .35 ? 'rep' : (roll < .6 ? 'seq' : (roll < .8 ? 'inv' : 'var'));
+      idxs = motifPhrase(motif, N, startIdx, endIdx, mode, pool.length);
+      if(idxs) motifStats[mode]++;
+    }
+    if(!idxs){
+      motifStats.fresh++;
+      idxs = [];
+      let prev = startIdx;
+      for(let i = 0; i < N; i++){
+        const u = units[i];
+        const arc = N === 1 ? 1 : i / (N - 1);
+        /* 目标轮廓：在起句音与落句音之间走一条弧线，平声略上扬、仄声略下抑 */
+        let vib = Math.sin(Math.PI * arc) * (sc.five ? 2.4 : 3.0) * (opt.leap || 1);
+        vib *= u.accent ? -0.78 : 1;
+        vib += (Math.random() - .5) * (u.accent ? .6 : 1.15);
+        const want = startIdx + (endIdx - startIdx) * arc + vib;
+        let idx;
+        if(i === N - 1){
+          idx = endIdx;                                     // 句末严格落到落音
+        } else {
+          /* 步幅由声调决定：平声级进（1 度）、仄声跳进（2 度，偶作 3 度） */
+          const mag = u.accent ? 2 : 1;
+          let dir = want > prev ? 1 : (want < prev ? -1 : (u.accent ? 1 : -1));
+          if(i > 0 && Math.abs(want - prev) > mag + 1 && Math.random() < .3) dir = -dir;
+          idx = prev + dir * mag;
+          if(Math.abs(want - idx) >= 4 && Math.random() < .45) idx = prev + dir * (mag + 1);
+        }
+        idx = clamp(idx, 0, pool.length - 1);
+        idxs.push(idx);
+        prev = idx;
       }
-      idx = clamp(idx, 0, pool.length - 1);
-      idxs.push(idx);
-      prev = idx;
+    }
+    if(pi === 0 && N >= 4 && !motif){
+      motif = {deltas:[]};
+      for(let k = 1; k < N; k++) motif.deltas.push(idxs[k] - idxs[k - 1]);
     }
     if(isRh){
       rhLines++;
@@ -134,21 +192,22 @@ function composeMelody(pack, opt){
     }
     for(let i = 0; i < N; i++){
       if(pos > CAP - 2){ truncated = true; break; }
-      const u = units[i], isLast = (i === N - 1);
-      let dur = 1;
-      /* 平声长、仄声短：押韵句末平声延至 3 格、仄声 2 格；非韵句平 2 / 仄 1 格
-         （英文重读音节反其道而行，落长音） */
-      if(isLast) dur = isRh ? (u.accent ? 2 : 3) : (u.accent ? (longOnAccent ? 3 : 1) : 2);
+      const u = units[i];
+      const dur = durs[i];
       notes.push({pitch:pool[idxs[i]], start:pos, dur, voice:'melody', ch:u.ch});
       if(Math.abs(idxs[i] - (idxs[i - 1] === undefined ? idxs[i] : idxs[i - 1])) >= 2) leapCount++; else stepCount++;
       pos += dur;
     }
     pos += 1;
+    /* 气口：非过片的句间随机多停半拍 */
+    if(pi < nPh - 1 && !ph.gap && Math.random() < .2){ pos += 1; breathCount++; }
   }
   return {
     notes, totalSteps:Math.min(pos, CAP), truncated, poolLen:pool.length,
     tonicMidi:pool[tonicIdx], domMidi:pool[domIdx], tonicPc,
-    rhLines, leapCount, stepCount, pauseCount, phrases:pack.phrases.length - (truncated ? 1 : 0)
+    rhLines, leapCount, stepCount, pauseCount, breathCount,
+    weakCount, dotCount, motifStats,
+    phrases:pack.phrases.length - (truncated ? 1 : 0)
   };
 }
 
@@ -191,6 +250,12 @@ async function composeText(){
     '（' + range.name + '），可用音级 ' + mel.poolLen + ' 个，主音 ' + PC[mod(mel.tonicMidi)] + '，属音 ' + PC[mod(mel.domMidi)]);
   log.push('依字行腔：平声级进 ' + mel.stepCount + ' 处、仄声跳进 ' + mel.leapCount +
     ' 处；押韵句 ' + mel.rhLines + ' 句落主音，其余落属音；过片停顿 ' + mel.pauseCount + ' 处');
+  if(mel.motifStats){
+    const ms = mel.motifStats;
+    log.push('动机发展：首句动机被后续句引用 ' + (ms.rep + ms.seq + ms.inv + ms.var) + ' 次' +
+      '（重复 ' + ms.rep + ' / 模进 ' + ms.seq + ' / 倒影 ' + ms.inv + ' / 变奏 ' + ms.var + '），自由展开 ' + ms.fresh + ' 句；' +
+      '弱起切分 ' + mel.weakCount + ' 处、附点落句 ' + mel.dotCount + ' 处、句间气口 ' + mel.breathCount + ' 处');
+  }
   if(mel.truncated) log.push('文本较长，已按 196 格上限截断（如需全篇请分段生成）');
 
   resetGridCols();
@@ -210,7 +275,7 @@ async function composeText(){
 
   const secTag = (a.kind === 'lyric' || a.kind === 'en')
     ? '（' + a.sections.map((s, i) => (s.label || ('段' + (i + 1)))).join(' / ') + '，副歌音区抬高 2 个音级）' : '';
-  log.push('词曲对位：每字/每音节 1 个八分音符，句末平声延长至 2–3 格' + secTag);
+  log.push('词曲对位：以八分音符为骨架，一字/一音节一音；句中偶发切分长音，押韵句末附点延至 3–4 格' + secTag);
   log.push('写入节奏网格：<b>' + GRID_COLS + '</b> 格 × ' + Math.ceil(GRID_COLS / 4) +
     ' 小节，速度 ' + bpm + ' BPM；风格自动切到 <b>' + STYLES[styleKey].name + '</b>');
 

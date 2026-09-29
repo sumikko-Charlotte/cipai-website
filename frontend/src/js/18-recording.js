@@ -51,7 +51,17 @@ async function toggleRec(){
       document.getElementById('lvlBar').style.width = '0%';
       hint.innerHTML = '录制完成，正在做音高追踪与音符切分…';
       const blob = new Blob(chunks, {type: chunks[0] ? chunks[0].type : 'audio/webm'});
-      await analyzeAudioBlob(blob, '哼唱录音');
+      /* 暂存：录音留在页面里，可随时重听 */
+      if(lastHumURL) URL.revokeObjectURL(lastHumURL);
+      lastHumBlob = blob;
+      lastHumName = '哼唱 ' + new Date().toLocaleString('zh-CN', {hour12:false});
+      lastHumURL = URL.createObjectURL(blob);
+      const au = document.getElementById('humAudio');
+      if(au){
+        au.src = lastHumURL;
+        document.getElementById('humSave').classList.add('on');
+      }
+      await analyzeAudioBlob(blob, '哼唱录音', true);
     };
     mediaRec.start();
     btn.classList.add('rec');
@@ -63,7 +73,7 @@ async function toggleRec(){
   }
 }
 
-async function analyzeAudioBlob(blob, source){
+async function analyzeAudioBlob(blob, source, isHum){
   try{
     const ctx = ensureCtx();
     const arr = await blob.arrayBuffer();
@@ -80,6 +90,13 @@ async function analyzeAudioBlob(blob, source){
       if(cv2) cv2.style.display = 'block';
       applyDetectedMelody(notes);
       drawWave(data);
+      if(isHum){
+        const hr = document.getElementById('humResult');
+        if(hr){
+          hr.querySelector('span').textContent = '从哼唱中识别出 ' + notes.length + ' 个音符，已量化到节奏网格';
+          hr.classList.add('on');
+        }
+      }
       setNotice('从' + source + '中识别出 ' + notes.length + ' 个音符，已量化到 16 格节奏网格。可在「手动编辑」里微调。');
     } else {
       setNotice('音高追踪结果不理想（可能噪声较大或音域超出范围）。已切换为示例旋律，你可以手动修正。');
@@ -127,4 +144,123 @@ function handleFile(file){
   } else {
     analyzeAudioBlob(file, '音频文件「' + file.name + '」');
   }
+}
+
+
+/* ---------- 哼唱录音保存：暂存 / 本地库（IndexedDB）/ 导出 ---------- */
+let lastHumBlob = null, lastHumURL = null, lastHumName = '';
+const HUM_DB = 'hum-recordings', HUM_STORE = 'recs';
+let humDb = null;
+
+function idbOpen(){
+  return new Promise((res, rej) => {
+    if(humDb) return res(humDb);
+    const rq = indexedDB.open(HUM_DB, 1);
+    rq.onupgradeneeded = () => { rq.result.createObjectStore(HUM_STORE, {keyPath:'id', autoIncrement:true}); };
+    rq.onsuccess = () => { humDb = rq.result; res(humDb); };
+    rq.onerror = () => rej(rq.error);
+  });
+}
+function humLibAll(){
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const rq = db.transaction(HUM_STORE).objectStore(HUM_STORE).getAll();
+    rq.onsuccess = () => res(rq.result || []);
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+function humLibPut(rec){
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const rq = db.transaction(HUM_STORE, 'readwrite').objectStore(HUM_STORE).put(rec);
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+function humLibDel(id){
+  return idbOpen().then(db => new Promise((res, rej) => {
+    const rq = db.transaction(HUM_STORE, 'readwrite').objectStore(HUM_STORE).delete(id);
+    rq.onsuccess = () => res();
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+
+function downloadBlob(blob, name){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ext = (blob.type && blob.type.indexOf('ogg') !== -1) ? '.ogg' : '.webm';
+  a.href = url;
+  a.download = name.replace(/[\\/:*?"<>|]/g, '_') + ext;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function exportHum(){
+  if(!lastHumBlob){ setNotice('还没有可导出的录音，先录一段哼唱。'); return; }
+  downloadBlob(lastHumBlob, lastHumName);
+}
+
+async function saveHumToLocal(){
+  if(!lastHumBlob){ setNotice('还没有可保存的录音，先录一段哼唱。'); return; }
+  try{
+    await humLibPut({name:lastHumName, ts:Date.now(), blob:lastHumBlob});
+    renderHumLib();
+    setNotice('已存入本地录音库「' + lastHumName + '」——刷新或重开浏览器后仍在，可随时重听或导出。');
+  }catch(e){
+    setNotice('存入本地库失败（浏览器可能禁用了本地存储）：' + (e && e.message ? e.message : e));
+  }
+}
+
+async function renderHumLib(){
+  const box = document.getElementById('humLib');
+  if(!box) return;
+  let list = [];
+  try{ list = await humLibAll(); }catch(e){ box.innerHTML = ''; return; }
+  box.innerHTML = '';
+  if(!list.length) return;
+  const cap = document.createElement('div');
+  cap.className = 'hs-tip';
+  cap.textContent = '本地录音库（保存在浏览器 IndexedDB，共 ' + list.length + ' 条，刷新后仍在）：';
+  box.appendChild(cap);
+  list.sort((a, b) => b.ts - a.ts).forEach(rec => {
+    const row = document.createElement('div');
+    row.className = 'hl-item';
+    const nm = document.createElement('span');
+    nm.className = 'nm';
+    nm.textContent = rec.name + ' · ' + (rec.blob.size / 1048576).toFixed(1) + ' MB';
+    const au = document.createElement('audio');
+    au.controls = true;
+    au.preload = 'metadata';
+    au.src = URL.createObjectURL(rec.blob);
+    const exp = document.createElement('button');
+    exp.className = 'chip';
+    exp.textContent = '导出';
+    exp.onclick = () => downloadBlob(rec.blob, rec.name);
+    const del = document.createElement('button');
+    del.className = 'chip';
+    del.textContent = '删除';
+    del.onclick = async () => {
+      await humLibDel(rec.id);
+      URL.revokeObjectURL(au.src);
+      renderHumLib();
+      setNotice('已从本地库删除「' + rec.name + '」。');
+    };
+    row.appendChild(nm);
+    row.appendChild(au);
+    row.appendChild(exp);
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+/* 识别结果 → 手动编辑：切选项卡、滚动到网格、闪烁提示 */
+function jumpToEdit(){
+  switchTab('edit');
+  setTimeout(() => {
+    const r = document.querySelector('#tab-edit .roll');
+    if(!r) return;
+    r.scrollIntoView({behavior:'smooth', block:'center'});
+    r.classList.add('flash');
+    setTimeout(() => r.classList.remove('flash'), 2300);
+  }, 80);
 }

@@ -1,0 +1,10 @@
+{
+  "name": "ai-accompaniment-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "旋律自动伴奏生成 · 前端静态站点（原生 HTML/JS/CSS，零依赖）",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}
