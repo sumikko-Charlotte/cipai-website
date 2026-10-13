@@ -3,7 +3,7 @@
 <head data-page-node-id="rAWe68f5ruox855WNvqTjE">
 <meta charset="UTF-8" data-page-node-id="JbjuRQXaFdehgQrRgAKGgd">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="rS8mLHGO1geXjJcfPovWuQ">
-<title>旋律的自动伴奏生成 · AI Accompaniment Studiodir1</title>
+<title>旋律的自动伴奏生成 · AI Accompaniment Studio</title>
 <link rel="stylesheet" href="assets/css/01-base.css">
 <link rel="stylesheet" href="assets/css/02-layout.css">
 <link rel="stylesheet" href="assets/css/03-input.css">
@@ -226,21 +226,42 @@
     </div>
     <div class="searchbar" data-page-node-id="3GBpGV8iplNuLSC0SjqsD8">
       <input id="cpSearch" placeholder="搜索词牌名 / 别名 / 字数 —— 例如「念奴娇」「百字令」「60字」" data-page-node-id="ArjTsN77F1MzSbFNiue8dR">
-      <button class="toggle" id="cpToggle" data-page-node-id="CMMwFuIwtsC2EhgHl3U0vw">展开词牌库</button>
+      <button class="toggle" id="cpToggle" type="button" aria-expanded="false">全部展开词牌</button>
     </div>
-    <div class="collapse" id="cpCollapse" data-page-node-id="JkL1NT55yuGpoYfE6VzGaR"><div class="cplist" id="cpList" data-page-node-id="3PQ7C75h3hrZztqeQS2Nmc"></div></div>
+    <div class="cplist" id="cpList" data-page-node-id="3PQ7C75h3hrZztqeQS2Nmc"></div>
     <dialog class="cp-dialog" id="cpDetailDialog" aria-label="词牌详细说明">
       <button class="western-dialog-close cp-dialog-close" type="button" aria-label="关闭词牌详细说明">×</button>
       <div class="cpdetail" id="cpDetail" data-page-node-id="13sNN6XnZIXTs79zmpxh0e"></div>
     </dialog>
 
     <div class="sec-t" data-page-node-id="LKUGAgRximskrnkJLSk5fU">十七宫调 · 调式与情感　<span class="tl" data-page-node-id="JzQv9s95h7bnA0D4WFaJWK">（引自元·燕南芝庵《唱论》）</span></div>
+    <div class="western-toolbar">
+      <input id="gongSearch" type="search" placeholder="搜索宫调名、情感、调式或音阶……" aria-label="搜索宫调">
+      <span id="gongCount" class="western-count" aria-live="polite"></span>
+      <button class="toggle" id="gongToggle" type="button" aria-expanded="false">全部展开宫调</button>
+    </div>
     <div class="gdwrap" id="gdGrid" data-page-node-id="DixRbUAeAMAWjjikegDwBH"></div>
+    <p class="western-empty" id="gongEmpty" hidden></p>
+    <dialog class="western-dialog gong-dialog" id="gongDetailDialog" aria-labelledby="gongDetailTitle">
+      <div class="western-dialog-head">
+        <h3 id="gongDetailTitle"></h3>
+        <button class="western-dialog-close" type="button" aria-label="关闭宫调详细说明">×</button>
+      </div>
+      <p class="gong-dialog-mood"></p>
+      <p class="gong-dialog-mode"></p>
+      <p class="gong-dialog-note"></p>
+      <p class="gong-dialog-audio-source"></p>
+      <div class="western-actions">
+        <button class="chip gong-dialog-preview" type="button">试听宫调音阶</button>
+        <button class="chip gong-dialog-search" type="button">在 Google 搜索此宫调</button>
+      </div>
+    </dialog>
 
     <div class="sec-t western-title">西方音乐固定形式与模型</div>
     <div class="western-toolbar">
       <input id="westernSearch" type="search" placeholder="搜索：Sonnet、赋格、十二小节布鲁斯……" aria-label="搜索西方音乐固定形式与模型">
       <span id="westernCount" class="western-count" aria-live="polite"></span>
+      <button class="toggle" id="westernToggle" type="button" aria-expanded="false">全部展开西方形式</button>
     </div>
     <div class="western-grid" id="westernLibrary">
       <article class="western-card" data-search="十四行诗 sonnet 诗歌 14行 彼特拉克 莎士比亚" data-detail="十四行诗源于中世纪意大利，通常由十四行组成，并以严格的韵式和转折组织思想。彼特拉克体常分为八行前段与六行后段，莎士比亚体常由三节四行诗加一组押韵双行收束；诗意转折也常被作曲家转化为段落或和声对比。">
@@ -255,7 +276,7 @@
         <small>模型特征：单声部 · 无固定拍号 · 调式旋律</small>
         <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="奏鸣曲式 sonata form 呈示 展开 再现 主部 副部" data-detail="奏鸣曲式通过主题材料与调性关系构成大规模的戏剧性进程，常见于交响曲、奏鸣曲和协奏曲的第一乐章。呈示部陈列主部与副部主题，展开部对主题进行拆分、转调和组合，再现部让主题回归并通常统一到主调；引子和尾声可按作品需要增设。">
+      <article class="western-card" data-search="奏鸣曲式 sonata form 呈示 展开 再现 主部 副部" data-audio="mozart-sonata" data-detail="奏鸣曲式通过主题材料与调性关系构成大规模的戏剧性进程，常见于交响曲、奏鸣曲和协奏曲的第一乐章。呈示部陈列主部与副部主题，展开部对主题进行拆分、转调和组合，再现部让主题回归并通常统一到主调；引子和尾声可按作品需要增设。">
         <div class="western-card-head"><h3>奏鸣曲式 <span>Sonata Form</span></h3><span class="western-kind">曲式模型</span></div>
         <p>古典时期器乐乐章常见结构。呈示部建立主题与调性对比，展开部发展材料，再现部回归并统一调性。</p>
         <small>结构：引子（可选）—呈示部—展开部—再现部—尾声（可选）</small>
@@ -279,7 +300,7 @@
         <small>模型特征：声部模仿 · 延迟进入 · 对位织体</small>
         <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="主题与变奏 theme and variations 变奏 装饰" data-detail="主题与变奏先呈示完整主题，再连续写出若干变奏。每段可以改变节奏、装饰音、调式、和声、音区或织体，也可采用小调化、对位或舞曲风格；主题的和声轮廓、乐句结构或动机通常保留为识别线索。">
+      <article class="western-card" data-search="主题与变奏 theme and variations 变奏 装饰" data-audio="bach-passacaglia" data-detail="主题与变奏先呈示完整主题，再连续写出若干变奏。每段可以改变节奏、装饰音、调式、和声、音区或织体，也可采用小调化、对位或舞曲风格；主题的和声轮廓、乐句结构或动机通常保留为识别线索。">
         <div class="western-card-head"><h3>主题与变奏 <span>Theme and Variations</span></h3><span class="western-kind">曲式模型</span></div>
         <p>先呈示可辨认的主题，再依次改变节奏、旋律、和声、调式或织体，同时保留主题核心特征。</p>
         <small>结构：主题—变奏一—变奏二—……—终曲</small>
@@ -303,7 +324,7 @@
         <small>结构：小步舞曲—三声中部—小步舞曲（Da Capo）</small>
         <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="十二小节布鲁斯 12-bar blues 蓝调 I IV V 和声" data-detail="十二小节布鲁斯是常见的蓝调和声循环，通常以 I、IV、V 级和弦构成三个四小节区域，并可在第四小节加入属七和弦、在末尾使用 turnaround 回到开头。不同传统会采用快速变化、和弦替代或节奏变化，因此该和弦表是基础模型而非唯一版本。">
+      <article class="western-card" data-search="十二小节布鲁斯 12-bar blues 蓝调 I IV V 和声" data-audio="blues-scale" data-detail="十二小节布鲁斯是常见的蓝调和声循环，通常以 I、IV、V 级和弦构成三个四小节区域，并可在第四小节加入属七和弦、在末尾使用 turnaround 回到开头。不同传统会采用快速变化、和弦替代或节奏变化，因此该和弦表是基础模型而非唯一版本。">
         <div class="western-card-head"><h3>十二小节布鲁斯 <span>12-bar Blues</span></h3><span class="western-kind">和声模型</span></div>
         <p>以主和弦、下属和弦、属和弦组成循环框架，常配合蓝调音阶、切分节奏与即兴演奏。</p>
         <small>常见和声：I— I— I— I｜IV— IV— I— I｜V— IV— I— V</small>
@@ -386,6 +407,7 @@
       <p class="western-dialog-summary"></p>
       <p class="western-dialog-structure"></p>
       <div class="western-actions">
+        <button class="chip western-preview" type="button">试听曲式示例</button>
         <button class="chip western-web-search" type="button">在 Google 搜索</button>
       </div>
     </dialog>
@@ -419,6 +441,7 @@
 <script src="src/js/20d-text-analyze.js"></script>
 <script src="src/js/20e-compose-melody.js"></script>
 <script src="src/js/20f-cipai-gongdiao.js"></script>
+<script src="src/js/20h-library-audio.js"></script>
 <script src="src/js/20g-library-navigation.js"></script>
 <script src="src/js/21-bind-init.js"></script>
 <script src="src/js/22-api-client.js"></script>

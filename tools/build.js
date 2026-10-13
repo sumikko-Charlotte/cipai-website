@@ -64,6 +64,21 @@ function inline(srcHtml) {
   return { html: out, used };
 }
 
+function copyLibraryAudio(outPath) {
+  const sourceDir = path.join(FRONTEND_DIR, 'assets', 'audio', 'library');
+  if (!fs.existsSync(sourceDir)) return 0;
+  const outputDir = path.join(path.dirname(outPath), 'assets', 'audio', 'library');
+  let copied = 0;
+  fs.readdirSync(sourceDir, { withFileTypes: true })
+    .filter(entry => entry.isFile() && /\.(ogg|mp3|wav)$/i.test(entry.name))
+    .forEach(entry => {
+      fs.mkdirSync(outputDir, { recursive: true });
+      fs.copyFileSync(path.join(sourceDir, entry.name), path.join(outputDir, entry.name));
+      copied += 1;
+    });
+  return copied;
+}
+
 function main() {
   const args = process.argv.slice(2);
   const checkOnly = args.includes('--check');
@@ -84,9 +99,12 @@ function main() {
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, html, 'utf8');
+  const audioFiles = copyLibraryAudio(outPath);
   console.log('已生成 ' + outPath);
   console.log('  内联 ' + used.length + ' 个文件（' + used.filter(u => u.startsWith('assets/')).length +
     ' 样式 / ' + used.filter(u => u.startsWith('src/')).length + ' 脚本），共 ' + html.length + ' 字符');
+  if (audioFiles) console.log('  复制 ' + audioFiles + ' 个资料库试听音频到 ' +
+    path.join(path.dirname(outPath), 'assets', 'audio', 'library'));
 }
 
 main();

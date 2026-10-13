@@ -21,7 +21,7 @@ const MIME = {
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.gif': 'image/gif', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
-  '.wav': 'audio/wav', '.mp3': 'audio/mpeg', '.mid': 'audio/midi',
+  '.wav': 'audio/wav', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.mid': 'audio/midi',
   '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf'
 };
 
@@ -33,8 +33,39 @@ function createServer(){
     if(!file.startsWith(ROOT)){ res.writeHead(403); res.end('Forbidden'); return; }
     fs.readFile(file, (err, data) => {
       if(err){ res.writeHead(404); res.end('Not Found: ' + urlPath); return; }
-      res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
-      res.end(data);
+      const headers = {
+        'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
+        'Accept-Ranges': 'bytes'
+      };
+      const range = req.headers.range;
+      if(range){
+        const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+        if(!match){
+          res.writeHead(416, { 'Content-Range': 'bytes */' + data.length });
+          res.end();
+          return;
+        }
+        let start = match[1] ? Number(match[1]) : 0;
+        let end = match[2] ? Number(match[2]) : data.length - 1;
+        if(!match[1] && match[2]){
+          start = Math.max(0, data.length - end);
+          end = data.length - 1;
+        }
+        if(start >= data.length || end < start){
+          res.writeHead(416, { 'Content-Range': 'bytes */' + data.length });
+          res.end();
+          return;
+        }
+        end = Math.min(end, data.length - 1);
+        headers['Content-Range'] = 'bytes ' + start + '-' + end + '/' + data.length;
+        headers['Content-Length'] = end - start + 1;
+        res.writeHead(206, headers);
+        res.end(req.method === 'HEAD' ? undefined : data.subarray(start, end + 1));
+        return;
+      }
+      headers['Content-Length'] = data.length;
+      res.writeHead(200, headers);
+      res.end(req.method === 'HEAD' ? undefined : data);
     });
   });
 }

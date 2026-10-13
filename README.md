@@ -30,7 +30,8 @@ cipai-website/
 │  ├─ server.js              零依赖静态预览服务器（npm run dev 启动）
 │  ├─ package.json           仅声明 dev/start 脚本，无第三方依赖
 │  ├─ assets/css/            8 个样式文件
-│  └─ src/js/                29 个脚本（00–19 基础链路、20a–20g 文字配乐与资料库、21 绑定、22 API 客户端）
+│  ├─ assets/audio/library/  资料库试听音频（含授权信息）
+│  └─ src/js/                30 个脚本（00–19 基础链路、20a–20h 文字配乐与资料库、21 绑定、22 API 客户端）
 ├─ backend/                  后端（FastAPI，分析管线已实现）
 │  ├─ app.py                 路由：/api/health、/api/analyze（音频分析）
 │  ├─ core/                  与框架无关的纯函数分析管线
@@ -39,11 +40,14 @@ cipai-website/
 │  ├─ services/              未来对接 AI 大模型 / 智能体的服务层（占位）
 │  └─ requirements.txt
 ├─ tools/
-│  ├─ build.js               把 frontend/ 合回单文件 → dist/index.html
+│  ├─ build.js               把 frontend/ 合回单文件 → dist/index.html（同时复制试听音频）
 │  ├─ test-compose-diversity.js  旋律生成多样性回归测试（前端算法）
-│  └─ test-backend-pipeline.py   后端闭环冒烟测试（合成音频走完整管线 + 真实 HTTP）
-└─ dist/                     单文件构建产物（不要手改，用 build.js 重新生成）
+│  ├─ test-backend-pipeline.py   后端闭环冒烟测试（合成音频走完整管线 + 真实 HTTP）
+│  └─ fetch_library_audio.py 抓取公版 / Creative Commons 音频
+└─ dist/                     单文件构建产物与试听音频（不要手改，用 build.js 重新生成）
 ```
+
+> `dist/index.html` 由 `tools/build.js` 生成；为保留资料库授权录音试听，需与旁边的 `dist/assets/audio/library/` 一起使用。
 
 ---
 
@@ -125,12 +129,32 @@ node tools/build.js --check              # 构建前校验引用完整性
 - 解码失败（缺 ffmpeg / 格式不支持）返回 422；其他分析异常返回 500。
 - 后端地址在 `frontend/src/js/22-api-client.js` 顶部的 `API_BASE`（前后端同源部署时改为 `''`）。
 
+### 资料库试听与音频来源
+
+资料库的试听分两条路：
+
+- **实时合成试听（默认）**：词牌、宫调、以及大部分西方曲式的「试听曲式示例」，都由浏览器用 Web Audio 按该形式的曲式骨架现场合成，不需要任何音频文件。
+- **授权录音试听**：西方资料库里有三张卡片额外挂了 Wikimedia Commons 的公版 / CC0 录音 —— 奏鸣曲式（莫扎特第 14 号钢琴奏鸣曲）、主题与变奏（巴赫 c 小调帕萨卡利亚变奏）、十二小节布鲁斯（C 布鲁斯音阶）。这些卡片的按钮文案是「试听授权录音」，点了会在卡片内嵌一个带原生控件的播放器，并展示作者、来源页面与许可条款链接。
+
+录音与文字试听互斥：开始播其中一种会自动停掉另一种；关闭详情弹窗也会停止播放。
+
+音频清单在 `frontend/src/js/20h-library-audio.js`（由抓取脚本生成，勿手改字段名）。使用 Python 标准库重新抓取并更新音频和许可清单：
+
+```bash
+python tools/fetch_library_audio.py
+```
+
+抓取器只接受公版、CC0 或 CC BY 音频，单个文件不超过 8 MB；不符合许可条件或大小限制的结果会跳过。运行需要可访问 Wikimedia Commons 的网络连接。
+
+> 本地预览时请用 `frontend/server.js` 或任意静态服务器，不要直接双击 `index.html`：播放器需要 HTTP Range 请求才能拖动进度，`server.js` 已实现 206 响应。
+
 ---
 
 ## 五、前端铁律（改代码前必读）
 
 1. **不是 ES module。** `frontend/src/js/` 下的脚本用传统 `<script src>` 加载，共享全局作用域。不要加 `import/export`。
-2. **`frontend/index.html` 里的引用顺序不能乱。** `20x` 系列（文字配乐）必须在 `21-bind-init.js` 之前；`22-api-client.js` 固定在最后。
+2. **`frontend/index.html` 里的引用顺序不能乱。** `20x` 系列必须在 `21-bind-init.js` 之前；`22-api-client.js` 固定在最后。
+   其中 **`20h-library-audio.js` 必须排在 `20g-library-navigation.js` 之前**：20g 初始化时要读 `LIBRARY_AUDIO` 决定按钮文案，顺序反了不会报错，但三张有录音的卡片会被错判成「试听曲式示例」。
 3. **每个源文件首行有 `/* >>> file: 路径 */` 标记**（相对 `frontend/` 目录）。`build.js` 内联时靠剥掉这一行还原单文件。新增文件必须带上这个标记，并同步在 `frontend/index.html` 加引用。
 4. **顶层 `function` 声明是全局的**，页面上的内联 `onclick` 依赖这一点。
 5. 配色不在 CSS 里：改风格颜色去 `src/js/01-palette.js`（JS 注入 CSS 变量），CSS 文件不要写死颜色。
@@ -163,7 +187,7 @@ node tools/build.js --check        # 只校验，不写文件
 | 哼唱录音 / 音高追踪 / 录音保存 / 手动编辑跳转 | `frontend/src/js/18-recording.js`、`17-waveform-pitch.js` |
 | 诗词格律 / 词牌库 / 宫调 | `frontend/src/js/20a-text-kb.js`、`20f-cipai-gongdiao.js` |
 | 依字行腔旋律生成（动机/节奏） | `frontend/src/js/20e-compose-melody.js` |
-| 资料库弹窗与搜索 | `frontend/src/js/20g-library-navigation.js` |
+| 资料库弹窗、搜索与录音试听 | `frontend/src/js/20g-library-navigation.js`、`20h-library-audio.js` |
 | 后端音高管线 | `backend/core/pitch_detection.py` |
 | 后端接口客户端 | `frontend/src/js/22-api-client.js` |
 
