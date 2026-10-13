@@ -8,12 +8,11 @@
 
 接口：
     GET  /              服务信息
-    GET  /api/health    健康检查
+    GET  /api/health    健康检查（engine 字段反映真实引擎是否可用）
     POST /api/analyze   上传音频，返回调性/速度等分析结果
 
-当前 core/ 下的算法函数尚未实现（NotImplementedError），
-/api/analyze 固定返回 mock 数据；core 实现后无需修改本文件，
-返回中的 engine 字段会自动从 "mock" 变成 "librosa"。
+core/ 已实现真实分析管线（librosa.pyin 音高提取 + Krumhansl 调性判定），
+/api/analyze 默认走真实引擎；librosa 不可用时回落 mock，engine 字段相应变化。
 
 交互文档：启动后浏览器打开 http://127.0.0.1:8000/docs
 """
@@ -58,12 +57,22 @@ async def root() -> dict:
     return {"service": "accompaniment-api", "version": app.version, "docs": "/docs"}
 
 
+def _engine_name() -> str:
+    """探测真实分析引擎是否可用（librosa 可导入即视为可用）。"""
+    try:
+        import librosa  # noqa: F401
+
+        return "librosa"
+    except ImportError:
+        return "mock"
+
+
 @app.get("/api/health")
 async def health() -> dict:
     return {
         "status": "ok",
         "version": app.version,
-        "engine": "mock",  # core 实现后可在 analyze 里改为真实引擎名
+        "engine": _engine_name(),
         "time": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
 
@@ -108,7 +117,12 @@ async def analyze(audio: UploadFile = File(..., description="录音或音频文�
         estimate = key_analysis.estimate_key(notes)
         result.update(estimate)
         result["notes_detected"] = len(notes)
+        result["duration_sec"] = round(pitch_series[-1]["t"], 2) if pitch_series else 0.0
+        result["tempo_bpm"] = pitch_detection.estimate_tempo_from_notes(notes)
         engine = "librosa"
+    except ValueError as exc:
+        # 解码失败（缺 ffmpeg 或格式不支持）属于客户端问题，返回 422
+        raise HTTPException(status_code=422, detail=str(exc))
     except NotImplementedError as exc:
         logger.info("core 尚未实现，返回 mock 数据：%s", exc)
     except Exception:

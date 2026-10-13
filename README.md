@@ -69,17 +69,18 @@ uvicorn app:app --reload --host 127.0.0.1 --port 8000
 | `apiAnalyzeAudio(fileOrBlob, filename?)` | `POST /api/analyze` | 上传音频（multipart 字段名 `audio`） |
 | `apiAnalyzeRecording(blob)` | 同上 | 便捷封装，直接送录音 Blob |
 
-`/api/analyze` 返回示例（当前为 mock，`engine: "mock"`）：
+`/api/analyze` 返回示例（core 已实现，走真实引擎时 `engine: "librosa"`）：
 
 ```json
 {
-  "key": "G", "mode": "major", "confidence": 0.95,
-  "tempo_bpm": 96.0, "notes_detected": 32, "duration_sec": 12.8,
-  "engine": "mock", "elapsed_ms": 0.4, "filename": "recording.webm", "bytes": 102400
+  "key": "G", "mode": "major", "confidence": 0.93,
+  "scale": [67, 69, 71, 72, 74, 76, 78],
+  "tempo_bpm": 129.2, "notes_detected": 11, "duration_sec": 6.34,
+  "engine": "librosa", "elapsed_ms": 4887.7, "filename": "recording.webm", "bytes": 102400
 }
 ```
 
-**接入方式**：`core/pitch_detection.py` 与 `core/key_analysis.py` 的骨架函数实现后，`app.py` 里预留的调用点会自动生效，返回值自动切到 `engine: "librosa"`，**不需要改 `app.py` 和前端**。
+**接入方式**：`core/pitch_detection.py` 与 `core/key_analysis.py` 已实现（librosa.pyin 音高提取 + Krumhansl 调性判定），`/api/analyze` 默认走真实引擎；librosa 不可用时回落 mock。`.webm/.m4a` 等格式优先 soundfile 解码，失败时自动回退 ffmpeg（需系统安装或用 `pip install imageio-ffmpeg` 兜底）。
 
 后端地址改在哪：`frontend/src/js/22-api-client.js` 顶部的 `API_BASE`（前后端同源部署时改为 `''`）。
 
@@ -123,7 +124,7 @@ node tools/build.js --check        # 只校验，不写文件
 
 ## 七、已知边界 / 待办
 
-- 后端 `/api/analyze` 目前返回 mock（core 未实现）；实现时按 core/ 里各 docstring 的提示用 librosa/pyin 落地。
+- 后端 `/api/analyze` 已接入真实分析管线（librosa.pyin + Krumhansl），`services/generation_service.py`（AI 伴奏生成）仍为占位待实现。
 - 教材 4.4 要求的"前端调后端出和弦→返回渲染"闭环尚未打通：当前前端自己的 HMM 已经全流程可用，后端实现后建议做"本地引擎 vs 服务端引擎"的 A/B 对比作为展示亮点。
 - 声调表覆盖 1166 字，未收录字按「平」中性处理；英文重音判定为启发式。
 - 和弦推导目前每小节一个和弦，未做小节内切分。
