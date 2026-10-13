@@ -33,16 +33,18 @@ cipai-website/
 │  ├─ assets/audio/library/  资料库试听音频（含授权信息）
 │  └─ src/js/                30 个脚本（00–19 基础链路、20a–20h 文字配乐与资料库、21 绑定、22 API 客户端）
 ├─ backend/                  后端（FastAPI，分析管线已实现）
-│  ├─ app.py                 路由：/api/health、/api/analyze（音频分析）
+│  ├─ app.py                 路由：/api/health、/api/analyze（音频分析）、/api/accompany（伴奏生成）
 │  ├─ core/                  与框架无关的纯函数分析管线
 │  │  ├─ pitch_detection.py  音频解码 → librosa.pyin 逐帧音高 → 中值滤波 → 音符切分 → 网格量化 → 速度估计
-│  │  └─ key_analysis.py     Krumhansl 调性判定 + HMM/维特比和弦序列
+│  │  ├─ key_analysis.py     Krumhansl 调性判定 + HMM/维特比和弦序列
+│  │  └─ accompaniment.py    伴奏模块（教材 4.4.6）：和弦序列 → 15 种音型编排 → mido 生成 MIDI
 │  ├─ services/              未来对接 AI 大模型 / 智能体的服务层（占位）
 │  └─ requirements.txt
 ├─ tools/
 │  ├─ build.js               把 frontend/ 合回单文件 → dist/index.html（同时复制试听音频）
 │  ├─ test-compose-diversity.js  旋律生成多样性回归测试（前端算法）
 │  ├─ test-backend-pipeline.py   后端闭环冒烟测试（合成音频走完整管线 + 真实 HTTP）
+│  ├─ test-accompany-api.py      伴奏接口冒烟测试（/api/accompany + MIDI 解析 + 422 校验）
 │  └─ fetch_library_audio.py 抓取公版 / Creative Commons 音频
 └─ dist/                     单文件构建产物与试听音频（不要手改，用 build.js 重新生成）
 ```
@@ -101,13 +103,27 @@ node tools/build.js --check              # 构建前校验引用完整性
 
 ## 四、前后端接口约定
 
-前端 `frontend/src/js/22-api-client.js` 提供（当前供控制台手动调用，主流程尚未接入后端）：
+前端 `frontend/src/js/22-api-client.js` 提供。**主流程已接入**：录音或导入音频识别成功后，前端自动调用 `/api/analyze` 做服务端分析，结果写入「算法过程日志」并与本地引擎对照；**生成伴奏按教材 4.4.6 走服务端**（`/api/accompany`，mido 生成 MIDI），后端不可用时自动降级为浏览器本地引擎（日志留降级说明），两种引擎的前端音型逻辑同源。
 
 | 全局函数 | 请求 | 说明 |
 |---|---|---|
 | `apiHealth()` | `GET /api/health` | 健康检查（`engine` 反映真实引擎是否可用） |
 | `apiAnalyzeAudio(fileOrBlob, filename?)` | `POST /api/analyze` | 上传音频（multipart 字段名 `audio`） |
 | `apiAnalyzeRecording(blob)` | 同上 | 便捷封装，直接送录音 Blob |
+| `apiAccompany(payload)` | `POST /api/accompany` | 和弦序列 → 服务端伴奏生成（JSON：`{chords:[{rootPc,type,start,dur}], pattern, bpm}`） |
+
+`/api/accompany` 返回示例：
+
+```json
+{
+  "engine": "mido", "pattern": "arpeggio", "bpm": 96,
+  "voices": ["chord", "bass"], "notes": 20,
+  "events": [{"pitch": 55, "start": 0.0, "dur": 1.4, "voice": "chord"}],
+  "midi_b64": "TVRoZAAAA...", "elapsed_ms": 3.2
+}
+```
+
+前端把 `events` 与本地旋律事件合并后交给现有 WebAudio 合成器播放；`midi_b64` 即课本交付的 MIDI 文件（Chords / Bass 两轨），日志里的「下载伴奏 .mid」可保存。
 
 `/api/analyze` 返回示例（真实引擎）：
 
@@ -206,7 +222,7 @@ node tools/build.js --check        # 只校验，不写文件
 
 ## 九、已知边界 / 待办
 
-- **教材 4.4 的 B/S 闭环尚未完全打通**：后端分析管线已完整（含 `chords` 和弦序列），`/api/analyze` 返回完整分析；但前端主流程（`22-api-client.js` 之外）尚未调用后端。接通后建议做「本地引擎 vs 服务端引擎」A/B 对比作为展示亮点。
+- **教材 4.4 的 B/S 闭环已通**：音高识别（前端 TarsosDSP 角色的等价实现）→ `/api/analyze` 服务端调性/和弦（HMM，对照显示）→ **`/api/accompany` 服务端生成伴奏（mido → MIDI，对应课本 4.4.6）**，后端失效自动降级浏览器本地引擎。待办：把对照结果做成更显式的 UI（如结果区双栏卡片）。
 - `app.py` 中 `NotImplementedError` 回落 mock 的分支已是死代码（core 已实现），待清理；`requirements.txt` 里的 `pypinyin` 为文本配乐服务端化预留，暂未使用。
 - 声调表覆盖 1166 字，未收录字按「平」中性处理；英文重音判定为启发式。
 - 和弦推导每小节一个和弦，未做小节内切分。

@@ -82,5 +82,42 @@ async function apiAnalyzeRecording(blob) {
   return apiAnalyzeAudio(blob, 'recording.webm');
 }
 
+/* ---- 伴奏生成：POST /api/accompany ----------------------------------
+   参数 payload：{ chords:[{rootPc,type,start,dur}], pattern, bpm }
+   服务端用 mido 把和弦序列编排成伴奏并生成 MIDI（课本 4.4.6）。
+   返回 { engine, pattern, bpm, events, midi_b64, ... }；
+   失败时 reject（后端没启动 / 参数非法），调用方负责降级本地引擎。 */
+async function apiAccompany(payload) {
+  if (!payload || !payload.chords || !payload.chords.length) {
+    return Promise.reject(new Error('apiAccompany：chords 不能为空'));
+  }
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
+  try {
+    const res = await fetch(apiUrl('/api/accompany'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      let detail = '';
+      if (data && data.detail) {
+        detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+      }
+      throw new Error('HTTP ' + res.status + (detail ? '：' + detail : ''));
+    }
+    return data;
+  } catch (err) {
+    if (err.message && err.message.indexOf('HTTP ') === 0) throw err;
+    const why = err.name === 'AbortError' ? '请求超时' : err.message;
+    throw new Error('伴奏生成请求失败（' + API_BASE + '）：' + why);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 console.log('[api-client] 就绪，后端 ' + API_BASE +
-  '（apiHealth / apiAnalyzeAudio / apiAnalyzeRecording）');
+  '（apiHealth / apiAnalyzeAudio / apiAnalyzeRecording / apiAccompany）');

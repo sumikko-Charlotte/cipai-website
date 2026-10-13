@@ -98,6 +98,7 @@ async function analyzeAudioBlob(blob, source, isHum){
         }
       }
       setNotice('从' + source + '中识别出 ' + notes.length + ' 个音符，已量化到 16 格节奏网格。可在「手动编辑」里微调。');
+      serverAnalyzeAsync(blob);   // 同步给服务端分析（失败自动降级本地引擎）
     } else {
       setNotice('音高追踪结果不理想（可能噪声较大或音域超出范围）。已切换为示例旋律，你可以手动修正。');
       applyPreset('twinkle');
@@ -263,4 +264,31 @@ function jumpToEdit(){
     r.classList.add('flash');
     setTimeout(() => r.classList.remove('flash'), 2300);
   }, 80);
+}
+
+
+/* ---------- 服务端分析对照：后端可用则对照，不可用则降级本地引擎 ----------
+   录音/导入识别成功后自动调用 /api/analyze；
+   结果写入算法日志并在生成时与本地引擎对照；
+   任何失败（后端没起、超时、报错）都只留一条降级说明，不影响本地流程。 */
+function logEngineCompare(res){
+  if(!res || res._compared || !state.key) return;
+  res._compared = true;
+  const localKey = PC[state.key.root] + (state.key.mode === 'major' ? ' 大调' : ' 小调');
+  const remoteKey = res.key + (res.mode === 'major' ? ' 大调' : ' 小调');
+  const same = (PC[state.key.root] === res.key && state.key.mode === res.mode);
+  logLine('引擎对照：本地 ' + localKey + ' ↔ 服务端 ' + remoteKey + (same ? '，一致 ✓' : '，不一致（可对比两引擎差异）'), true);
+}
+function serverAnalyzeAsync(blob){
+  apiAnalyzeAudio(blob).then(res => {
+    state.serverAnalysis = res;
+    const deg = (res.chords || []).map(c => c.symbol + '(' + c.degree + ')').join(' → ') || '（无）';
+    logLine('服务端分析（librosa 引擎）：' + res.key + (res.mode === 'major' ? ' 大调' : ' 小调') +
+      '（置信 ' + res.confidence + '）· ' + res.tempo_bpm + ' BPM · ' + res.notes_detected + ' 个音符', true);
+    logLine('服务端和弦：' + deg, true);
+    if(state.key) logEngineCompare(res);
+  }).catch(err => {
+    state.serverAnalysis = null;
+    logLine('服务端分析不可用（' + (err && err.message ? err.message : err) + '），已降级为浏览器本地引擎。', true);
+  });
 }

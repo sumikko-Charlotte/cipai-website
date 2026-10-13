@@ -98,6 +98,16 @@ function exportMidi(){
   download(buildMidiBlob(), baseName() + '.mid');
   logLine('已导出 MIDI：包含旋律 / 和弦 / 低音三个轨道，可在 DAW 中继续编辑', true);
 }
+/* 服务端生成的伴奏 MIDI（课本 4.4.6 交付物，mido 产出，仅和弦 + 低音两轨） */
+function downloadServerMidi(){
+  const acc = state.serverAccompaniment;
+  if(!acc || !acc.midi_b64) return;
+  const bin = atob(acc.midi_b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  download(new Blob([arr], {type:'audio/midi'}), baseName() + '_server.mid');
+  logLine('已下载服务端伴奏 MIDI（' + acc.notes + ' 个事件，mido 引擎）', true);
+}
 function exportJson(){
   if(!state.events.length) return;
   const data = {

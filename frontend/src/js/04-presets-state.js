@@ -39,6 +39,6 @@ const PRESETS = {
 const state = {
   theme:'classical', chordInst:'piano', bassInst:'contrabass',
   grid:new Array(GRID_COLS).fill(null), melody:[], key:null,
-  chords:[], events:[], bpm:90, audioCtx:null
+  chords:[], events:[], bpm:90, audioCtx:null, serverAnalysis:null, serverAccompaniment:null
 };
 const playState = {raf:0, master:null, startedAt:0, stepSec:1, playing:false, abQueue:null, abTimer:null};

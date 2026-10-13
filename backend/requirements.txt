@@ -5,3 +5,4 @@ librosa>=0.10
 soundfile>=0.12
 imageio-ffmpeg>=0.5  # webm/m4a 等格式的解码兜底（无系统 ffmpeg 时使用）
 pypinyin>=0.53
+mido>=1.3

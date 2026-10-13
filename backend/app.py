@@ -10,6 +10,7 @@
     GET  /              服务信息
     GET  /api/health    健康检查（engine 字段反映真实引擎是否可用）
     POST /api/analyze   上传音频，返回调性/速度等分析结果
+    POST /api/accompany 和弦序列 → 服务端生成伴奏（mido → MIDI，课本 4.4.6）
 
 core/ 已实现真实分析管线（librosa.pyin 音高提取 + Krumhansl 调性判定），
 /api/analyze 默认走真实引擎；librosa 不可用时回落 mock，engine 字段相应变化。
@@ -18,13 +19,15 @@ core/ 已实现真实分析管线（librosa.pyin 音高提取 + Krumhansl 调性
 """
 from __future__ import annotations
 
+import base64
 import logging
 import time
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
-from core import key_analysis, pitch_detection
+from core import accompaniment, key_analysis, pitch_detection
 
 logger = logging.getLogger("accompaniment")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -140,6 +143,49 @@ async def analyze(audio: UploadFile = File(..., description="录音或音频文�
         }
     )
     return result
+
+
+class ChordIn(BaseModel):
+    """一个和弦占用网格的区间；start/dur 单位为八分音符步（与前端一致）。"""
+
+    rootPc: int = Field(ge=0, le=11, description="根音音级 0-11（C=0）")
+    type: str = Field(description="和弦类型，如 maj/min/dom7")
+    start: float = Field(ge=0, description="起始格（八分音符步）")
+    dur: float = Field(gt=0, description="时值（八分音符步）")
+
+
+class AccompanyIn(BaseModel):
+    chords: list[ChordIn] = Field(min_length=1)
+    pattern: str = Field(default="arpeggio", description="伴奏音型，见 accompaniment.PATTERNS")
+    bpm: float = Field(default=96.0, gt=40, lt=240)
+
+
+@app.post("/api/accompany", summary="和弦序列 → 服务端生成伴奏（MIDI）")
+async def accompany(body: AccompanyIn) -> dict:
+    """伴奏模块（课本 4.4.6）：接收和弦序列，编排伴奏音型并生成 MIDI。
+
+    返回伴奏事件（前端直接播放）与 base64 编码的 MIDI 文件（可下载）。
+    """
+    t0 = time.perf_counter()
+    chords = [c.model_dump() for c in body.chords]
+    try:
+        events, midi_bytes = accompaniment.build_accompaniment(chords, body.pattern, body.bpm)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception:
+        logger.exception("伴奏生成失败")
+        raise HTTPException(status_code=500, detail="伴奏生成失败，详见服务端日志")
+
+    return {
+        "engine": "mido",
+        "pattern": body.pattern,
+        "bpm": body.bpm,
+        "voices": ["chord", "bass"],
+        "notes": len(events),
+        "events": events,
+        "midi_b64": base64.b64encode(midi_bytes).decode("ascii"),
+        "elapsed_ms": round((time.perf_counter() - t0) * 1000, 1),
+    }
 
 
 if __name__ == "__main__":

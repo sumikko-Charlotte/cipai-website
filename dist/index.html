@@ -952,7 +952,7 @@ const PRESETS = {
 const state = {
   theme:'classical', chordInst:'piano', bassInst:'contrabass',
   grid:new Array(GRID_COLS).fill(null), melody:[], key:null,
-  chords:[], events:[], bpm:90, audioCtx:null
+  chords:[], events:[], bpm:90, audioCtx:null, serverAnalysis:null, serverAccompaniment:null
 };
 const playState = {raf:0, master:null, startedAt:0, stepSec:1, playing:false, abQueue:null, abTimer:null};
 
@@ -1760,6 +1760,16 @@ function exportMidi(){
   download(buildMidiBlob(), baseName() + '.mid');
   logLine('已导出 MIDI：包含旋律 / 和弦 / 低音三个轨道，可在 DAW 中继续编辑', true);
 }
+/* 服务端生成的伴奏 MIDI（课本 4.4.6 交付物，mido 产出，仅和弦 + 低音两轨） */
+function downloadServerMidi(){
+  const acc = state.serverAccompaniment;
+  if(!acc || !acc.midi_b64) return;
+  const bin = atob(acc.midi_b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  download(new Blob([arr], {type:'audio/midi'}), baseName() + '_server.mid');
+  logLine('已下载服务端伴奏 MIDI（' + acc.notes + ' 个事件，mido 引擎）', true);
+}
 function exportJson(){
   if(!state.events.length) return;
   const data = {
@@ -2094,6 +2104,7 @@ async function analyzeAudioBlob(blob, source, isHum){
         }
       }
       setNotice('从' + source + '中识别出 ' + notes.length + ' 个音符，已量化到 16 格节奏网格。可在「手动编辑」里微调。');
+      serverAnalyzeAsync(blob);   // 同步给服务端分析（失败自动降级本地引擎）
     } else {
       setNotice('音高追踪结果不理想（可能噪声较大或音域超出范围）。已切换为示例旋律，你可以手动修正。');
       applyPreset('twinkle');
@@ -2261,6 +2272,33 @@ function jumpToEdit(){
   }, 80);
 }
 
+
+/* ---------- 服务端分析对照：后端可用则对照，不可用则降级本地引擎 ----------
+   录音/导入识别成功后自动调用 /api/analyze；
+   结果写入算法日志并在生成时与本地引擎对照；
+   任何失败（后端没起、超时、报错）都只留一条降级说明，不影响本地流程。 */
+function logEngineCompare(res){
+  if(!res || res._compared || !state.key) return;
+  res._compared = true;
+  const localKey = PC[state.key.root] + (state.key.mode === 'major' ? ' 大调' : ' 小调');
+  const remoteKey = res.key + (res.mode === 'major' ? ' 大调' : ' 小调');
+  const same = (PC[state.key.root] === res.key && state.key.mode === res.mode);
+  logLine('引擎对照：本地 ' + localKey + ' ↔ 服务端 ' + remoteKey + (same ? '，一致 ✓' : '，不一致（可对比两引擎差异）'), true);
+}
+function serverAnalyzeAsync(blob){
+  apiAnalyzeAudio(blob).then(res => {
+    state.serverAnalysis = res;
+    const deg = (res.chords || []).map(c => c.symbol + '(' + c.degree + ')').join(' → ') || '（无）';
+    logLine('服务端分析（librosa 引擎）：' + res.key + (res.mode === 'major' ? ' 大调' : ' 小调') +
+      '（置信 ' + res.confidence + '）· ' + res.tempo_bpm + ' BPM · ' + res.notes_detected + ' 个音符', true);
+    logLine('服务端和弦：' + deg, true);
+    if(state.key) logEngineCompare(res);
+  }).catch(err => {
+    state.serverAnalysis = null;
+    logLine('服务端分析不可用（' + (err && err.message ? err.message : err) + '），已降级为浏览器本地引擎。', true);
+  });
+}
+
 </script>
 <script>
 /* ============================================================
@@ -2293,6 +2331,29 @@ function logLine(html, dim){
 function setNotice(t){ const n = document.getElementById('notice'); n.textContent = t; n.classList.add('on'); }
 function clearNotice(){ document.getElementById('notice').classList.remove('on'); }
 
+/* 伴奏生成（课本 4.4.6）：优先请求服务端（mido → MIDI），
+   后端不可用时返回 null，由调用方降级到浏览器本地引擎。 */
+async function accompanyFromServer(){
+  const payload = {
+    chords: state.chords.map(c => ({rootPc:c.rootPc, type:c.type, start:c.start, dur:c.dur})),
+    pattern: STYLES[state.theme].pat,
+    bpm: state.bpm
+  };
+  try{
+    const res = await apiAccompany(payload);
+    const evs = state.melody.map(n => ({pitch:n.midi, start:n.start, dur:n.dur, voice:'melody'}));
+    res.events.forEach(e => evs.push({pitch:e.pitch, start:e.start, dur:e.dur, voice:e.voice}));
+    evs.sort((a,b) => a.start - b.start || (a.voice === 'bass' ? -1 : 1));
+    state.events = evs;
+    state.serverAccompaniment = res;
+    return res;
+  }catch(err){
+    state.serverAccompaniment = null;
+    logLine('服务端伴奏不可用（' + (err && err.message ? err.message : err) + '）', true);
+    return null;
+  }
+}
+
 async function generate(){
   if(state.melody.length < 2){
     setNotice('旋律太短了。请先做声音识别、导入文件，或者直接点示例旋律。');
@@ -2314,6 +2375,7 @@ async function generate(){
   state.key = detectKey(state.melody);
   logLine('调性判定：Krumhansl 音级轮廓相关 → <b>' + PC[state.key.root] + (state.key.mode === 'major' ? ' 大调' : ' 小调') + '</b>（相关系数 ' + state.key.score.toFixed(3) + '）');
   logLine('调内和弦候选集：' + DIATONIC[state.key.mode].map(c => c.roman).join('  '), true);
+  if(state.serverAnalysis) logEngineCompare(state.serverAnalysis);
   await wait(560);
   setProg(1,'fin');
 
@@ -2326,10 +2388,18 @@ async function generate(){
   setProg(2,'fin');
 
   setProg(3);
-  buildAccompaniment();
-  logLine('伴奏音型：<b>' + STYLES[state.theme].name + '</b> · ' + PATTERN_NAME[STYLES[state.theme].pat]);
+  const srvAcc = await accompanyFromServer();
+  if(srvAcc){
+    logLine('伴奏引擎：<b>服务端（mido → MIDI）</b>，耗时 ' + srvAcc.elapsed_ms + ' ms · <a href="#" onclick="downloadServerMidi();return false;">下载伴奏 .mid</a>');
+    logLine('伴奏音型：<b>' + STYLES[state.theme].name + '</b> · ' + PATTERN_NAME[STYLES[state.theme].pat]);
+    logLine('生成伴奏事件 <b>' + state.events.filter(e => e.voice !== 'melody').length + '</b> 个（含和弦与低音声部）');
+  }else{
+    buildAccompaniment();
+    logLine('伴奏引擎：<b>浏览器本地</b>（已按前端算法降级处理）', true);
+    logLine('伴奏音型：<b>' + STYLES[state.theme].name + '</b> · ' + PATTERN_NAME[STYLES[state.theme].pat]);
+    logLine('生成伴奏事件 <b>' + state.events.filter(e => e.voice !== 'melody').length + '</b> 个（含和弦与低音声部）');
+  }
   logLine('乐器配置：和弦声部 ' + INSTRUMENTS[state.chordInst].name + ' / 低音声部 ' + BASS_INSTRUMENTS[state.bassInst].name);
-  logLine('生成伴奏事件 <b>' + state.events.filter(e => e.voice !== 'melody').length + '</b> 个（含和弦与低音声部）');
   await wait(480);
   setProg(3,'fin');
 
@@ -3911,8 +3981,45 @@ async function apiAnalyzeRecording(blob) {
   return apiAnalyzeAudio(blob, 'recording.webm');
 }
 
+/* ---- 伴奏生成：POST /api/accompany ----------------------------------
+   参数 payload：{ chords:[{rootPc,type,start,dur}], pattern, bpm }
+   服务端用 mido 把和弦序列编排成伴奏并生成 MIDI（课本 4.4.6）。
+   返回 { engine, pattern, bpm, events, midi_b64, ... }；
+   失败时 reject（后端没启动 / 参数非法），调用方负责降级本地引擎。 */
+async function apiAccompany(payload) {
+  if (!payload || !payload.chords || !payload.chords.length) {
+    return Promise.reject(new Error('apiAccompany：chords 不能为空'));
+  }
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT_MS);
+  try {
+    const res = await fetch(apiUrl('/api/accompany'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      let detail = '';
+      if (data && data.detail) {
+        detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+      }
+      throw new Error('HTTP ' + res.status + (detail ? '：' + detail : ''));
+    }
+    return data;
+  } catch (err) {
+    if (err.message && err.message.indexOf('HTTP ') === 0) throw err;
+    const why = err.name === 'AbortError' ? '请求超时' : err.message;
+    throw new Error('伴奏生成请求失败（' + API_BASE + '）：' + why);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 console.log('[api-client] 就绪，后端 ' + API_BASE +
-  '（apiHealth / apiAnalyzeAudio / apiAnalyzeRecording）');
+  '（apiHealth / apiAnalyzeAudio / apiAnalyzeRecording / apiAccompany）');
 
 </script>
 </body>
