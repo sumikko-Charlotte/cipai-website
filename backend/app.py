@@ -119,6 +119,8 @@ async def analyze(audio: UploadFile = File(..., description="录音或音频文�
         result["notes_detected"] = len(notes)
         result["duration_sec"] = round(pitch_series[-1]["t"], 2) if pitch_series else 0.0
         result["tempo_bpm"] = pitch_detection.estimate_tempo_from_notes(notes)
+        grid = pitch_detection.quantize_to_grid(notes, bpm=result["tempo_bpm"])
+        result["chords"] = key_analysis.chord_sequence(grid, estimate["key"], estimate["mode"])
         engine = "librosa"
     except ValueError as exc:
         # 解码失败（缺 ffmpeg 或格式不支持）属于客户端问题，返回 422

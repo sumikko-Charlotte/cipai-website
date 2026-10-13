@@ -134,6 +134,9 @@ def main() -> int:
                         "engine=%s key=%s %s notes=%s bpm=%s" % (
                             result.get("engine"), result.get("key"), result.get("mode"),
                             result.get("notes_detected"), result.get("tempo_bpm")))
+            cs = result.get("chords") or []
+            ok &= check("接口返回和弦序列", bool(cs) and cs[-1].get("degree") in ("I", "i"),
+                        " → ".join(c.get("degree", "?") for c in cs))
     finally:
         proc.terminate()
         try:

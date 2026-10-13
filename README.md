@@ -112,10 +112,16 @@ node tools/build.js --check              # 构建前校验引用完整性
   "key": "G", "mode": "major", "confidence": 0.93,
   "scale": [67, 69, 71, 72, 74, 76, 78],
   "tempo_bpm": 129.2, "notes_detected": 11, "duration_sec": 6.34,
+  "chords": [
+    {"bar": 0, "symbol": "Am", "degree": "ii", "pitches": [57, 60, 64]},
+    {"bar": 2, "symbol": "D7", "degree": "V7", "pitches": [62, 66, 69, 72]},
+    {"bar": 3, "symbol": "G", "degree": "I", "pitches": [67, 71, 74]}
+  ],
   "engine": "librosa", "elapsed_ms": 4887.7, "filename": "recording.webm", "bytes": 102400
 }
 ```
 
+- `chords` 为 HMM/维特比推导的每小节和弦序列（相邻同和弦已合并，含音级构成 `pitches`）；
 - 解码失败（缺 ffmpeg / 格式不支持）返回 422；其他分析异常返回 500。
 - 后端地址在 `frontend/src/js/22-api-client.js` 顶部的 `API_BASE`（前后端同源部署时改为 `''`）。
 
@@ -176,7 +182,7 @@ node tools/build.js --check        # 只校验，不写文件
 
 ## 九、已知边界 / 待办
 
-- **教材 4.4 的 B/S 闭环尚未完全打通**：后端 `chord_sequence`（HMM 和弦）已实现但未接入 `/api/analyze`（响应里没有 `chords` 字段）；前端主流程（`22-api-client.js` 之外）尚未调用后端。建议接通后做「本地引擎 vs 服务端引擎」A/B 对比作为展示亮点。
+- **教材 4.4 的 B/S 闭环尚未完全打通**：后端分析管线已完整（含 `chords` 和弦序列），`/api/analyze` 返回完整分析；但前端主流程（`22-api-client.js` 之外）尚未调用后端。接通后建议做「本地引擎 vs 服务端引擎」A/B 对比作为展示亮点。
 - `app.py` 中 `NotImplementedError` 回落 mock 的分支已是死代码（core 已实现），待清理；`requirements.txt` 里的 `pypinyin` 为文本配乐服务端化预留，暂未使用。
 - 声调表覆盖 1166 字，未收录字按「平」中性处理；英文重音判定为启发式。
 - 和弦推导每小节一个和弦，未做小节内切分。
