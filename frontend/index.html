@@ -3,7 +3,7 @@
 <head data-page-node-id="rAWe68f5ruox855WNvqTjE">
 <meta charset="UTF-8" data-page-node-id="JbjuRQXaFdehgQrRgAKGgd">
 <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="rS8mLHGO1geXjJcfPovWuQ">
-<title>旋律的自动伴奏生成 · AI Accompaniment Studio</title>
+<title>旋律的自动伴奏生成 · AI Accompaniment Studiodir1</title>
 <link rel="stylesheet" href="assets/css/01-base.css">
 <link rel="stylesheet" href="assets/css/02-layout.css">
 <link rel="stylesheet" href="assets/css/03-input.css">
@@ -229,7 +229,10 @@
       <button class="toggle" id="cpToggle" data-page-node-id="CMMwFuIwtsC2EhgHl3U0vw">展开词牌库</button>
     </div>
     <div class="collapse" id="cpCollapse" data-page-node-id="JkL1NT55yuGpoYfE6VzGaR"><div class="cplist" id="cpList" data-page-node-id="3PQ7C75h3hrZztqeQS2Nmc"></div></div>
-    <div class="cpdetail" id="cpDetail" data-page-node-id="13sNN6XnZIXTs79zmpxh0e"></div>
+    <dialog class="cp-dialog" id="cpDetailDialog" aria-label="词牌详细说明">
+      <button class="western-dialog-close cp-dialog-close" type="button" aria-label="关闭词牌详细说明">×</button>
+      <div class="cpdetail" id="cpDetail" data-page-node-id="13sNN6XnZIXTs79zmpxh0e"></div>
+    </dialog>
 
     <div class="sec-t" data-page-node-id="LKUGAgRximskrnkJLSk5fU">十七宫调 · 调式与情感　<span class="tl" data-page-node-id="JzQv9s95h7bnA0D4WFaJWK">（引自元·燕南芝庵《唱论》）</span></div>
     <div class="gdwrap" id="gdGrid" data-page-node-id="DixRbUAeAMAWjjikegDwBH"></div>
@@ -240,75 +243,154 @@
       <span id="westernCount" class="western-count" aria-live="polite"></span>
     </div>
     <div class="western-grid" id="westernLibrary">
-      <article class="western-card" data-search="十四行诗 sonnet 诗歌 14行 彼特拉克 莎士比亚">
+      <article class="western-card" data-search="十四行诗 sonnet 诗歌 14行 彼特拉克 莎士比亚" data-detail="十四行诗源于中世纪意大利，通常由十四行组成，并以严格的韵式和转折组织思想。彼特拉克体常分为八行前段与六行后段，莎士比亚体常由三节四行诗加一组押韵双行收束；诗意转折也常被作曲家转化为段落或和声对比。">
         <div class="western-card-head"><h3>十四行诗 <span>Sonnet</span></h3><span class="western-kind">诗歌定型体</span></div>
         <p>固定为 14 行的西方诗歌形式。常见彼特拉克式（8+6）与莎士比亚式（4+4+4+2）结构，常被谱写为艺术歌曲或分节歌曲。</p>
         <small>结构模型：ABBA ABBA + 转折六行 / ABAB CDCD EFEF GG</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="格里高利圣咏 gregorian chant 圣咏 单声部 调式 礼仪">
+      <article class="western-card" data-search="格里高利圣咏 gregorian chant 圣咏 单声部 调式 礼仪" data-detail="格里高利圣咏是罗马天主教礼仪传统中的拉丁文单声部音乐，旋律通常不配和弦，节奏随歌词语句自然展开。它以教会调式为基础，音域和终止音共同塑造旋律特征，是西方记谱与复调传统的重要历史源流。">
         <div class="western-card-head"><h3>格里高利圣咏 <span>Gregorian Chant</span></h3><span class="western-kind">圣咏传统</span></div>
         <p>西方基督教礼仪中的单声部圣咏传统，以拉丁礼仪文本、自由节奏和中世纪教会调式为典型特征。</p>
         <small>模型特征：单声部 · 无固定拍号 · 调式旋律</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="奏鸣曲式 sonata form 呈示 展开 再现 主部 副部">
+      <article class="western-card" data-search="奏鸣曲式 sonata form 呈示 展开 再现 主部 副部" data-detail="奏鸣曲式通过主题材料与调性关系构成大规模的戏剧性进程，常见于交响曲、奏鸣曲和协奏曲的第一乐章。呈示部陈列主部与副部主题，展开部对主题进行拆分、转调和组合，再现部让主题回归并通常统一到主调；引子和尾声可按作品需要增设。">
         <div class="western-card-head"><h3>奏鸣曲式 <span>Sonata Form</span></h3><span class="western-kind">曲式模型</span></div>
         <p>古典时期器乐乐章常见结构。呈示部建立主题与调性对比，展开部发展材料，再现部回归并统一调性。</p>
         <small>结构：引子（可选）—呈示部—展开部—再现部—尾声（可选）</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="回旋曲式 rondo ABACA 主部 插部">
+      <article class="western-card" data-search="回旋曲式 rondo ABACA 主部 插部" data-detail="回旋曲以容易辨认的主部主题为中心，主部在不同插部之间反复出现。插部可通过调性、旋律或织体形成对照，回归时也可能经过装饰或缩短；循环结构带来清晰的记忆点，常用于古典器乐乐章和歌曲副歌设计。">
         <div class="western-card-head"><h3>回旋曲式 <span>Rondo</span></h3><span class="western-kind">曲式模型</span></div>
         <p>鲜明的主部主题多次回归，与不同插部交替，常用于作品末乐章。</p>
         <small>常见结构：ABACA · ABACABA</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="赋格 fugue 复调 对位 主题 答题">
+      <article class="western-card" data-search="赋格 fugue 复调 对位 主题 答题" data-detail="赋格是以主题模仿和对位发展为核心的复调写作方式。主题先在一个声部出现，其他声部依次以答题进入，期间可有对题、间插段、主题倒影或增值等处理；赋格并没有唯一固定的段落模板，声部进入顺序与调性安排因作品而异。">
         <div class="western-card-head"><h3>赋格 <span>Fugue</span></h3><span class="western-kind">复调模型</span></div>
         <p>以主题在多个声部依次进入为核心，通过答题、对题、间插段与主题再现发展复调织体。</p>
         <small>典型过程：呈示部—展开段—主题再现</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="卡农 canon 复调 模仿 延迟进入">
+      <article class="western-card" data-search="卡农 canon 复调 模仿 延迟进入" data-detail="卡农让一个声部的旋律由其他声部按时间间隔模仿，模仿可保持相同音高，也可按固定音程移位或采用倒影、逆行等方式变化。轮唱是较直观的严格模仿形式；与赋格相比，卡农通常更强调预先设定的模仿规则。">
         <div class="western-card-head"><h3>卡农 <span>Canon</span></h3><span class="western-kind">复调模型</span></div>
         <p>一个声部先呈示旋律，其他声部按固定时间或音程间隔进入并模仿，可形成严格或自由卡农。</p>
         <small>模型特征：声部模仿 · 延迟进入 · 对位织体</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="主题与变奏 theme and variations 变奏 装饰">
+      <article class="western-card" data-search="主题与变奏 theme and variations 变奏 装饰" data-detail="主题与变奏先呈示完整主题，再连续写出若干变奏。每段可以改变节奏、装饰音、调式、和声、音区或织体，也可采用小调化、对位或舞曲风格；主题的和声轮廓、乐句结构或动机通常保留为识别线索。">
         <div class="western-card-head"><h3>主题与变奏 <span>Theme and Variations</span></h3><span class="western-kind">曲式模型</span></div>
         <p>先呈示可辨认的主题，再依次改变节奏、旋律、和声、调式或织体，同时保留主题核心特征。</p>
         <small>结构：主题—变奏一—变奏二—……—终曲</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="二部曲式 binary form AB 二段体">
+      <article class="western-card" data-search="二部曲式 binary form AB 二段体" data-detail="二部曲式由前后两个部分组成，常标记为 A 与 B，两个部分通常各自反复。A 部从主调出发并在属调或关系调附近结束，B 部发展已有材料并回到主调；巴洛克组曲舞曲和早期器乐小品中尤为常见。">
         <div class="western-card-head"><h3>二部曲式 <span>Binary Form</span></h3><span class="western-kind">曲式模型</span></div>
         <p>由前后两个乐段构成，常以调性离开与回归形成方向感；巴洛克舞曲中常见反复记号。</p>
         <small>基本结构：A（主调→属调/关系调）｜B（展开→主调）</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="三部曲式 ternary form ABA 中部 对比">
+      <article class="western-card" data-search="三部曲式 ternary form ABA 中部 对比" data-detail="三部曲式采用 A—B—A′ 的对称布局：首段陈述主要材料，中段提供旋律、调性或织体上的对比，末段再现首段主题。再现部分可以原样返回，也可以加入变奏；小步舞曲与三声中部是大型套曲中常见的三部布局。">
         <div class="western-card-head"><h3>三部曲式 <span>Ternary Form</span></h3><span class="western-kind">曲式模型</span></div>
         <p>第一部分陈述主题，中部提供对比，第三部分再现第一部分，可使用原样或变化再现。</p>
         <small>基本结构：A—B—A′</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="小步舞曲三声中部 minuet trio 舞曲 da capo">
+      <article class="western-card" data-search="小步舞曲三声中部 minuet trio 舞曲 da capo" data-detail="小步舞曲与三声中部组合成 A—B—A 的套曲乐章。小步舞曲段和三声中部各自常采用带反复的二部曲式，三声中部名称源于早期常见的三声部配器；演奏三声中部后以 Da Capo 回到小步舞曲，第三次演奏时通常省略内部反复。">
         <div class="western-card-head"><h3>小步舞曲与三声中部 <span>Minuet &amp; Trio</span></h3><span class="western-kind">套曲乐章</span></div>
         <p>两个舞曲段落构成对比，中部通常采用较轻的配器；之后回到小步舞曲，常省略重复。</p>
         <small>结构：小步舞曲—三声中部—小步舞曲（Da Capo）</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="十二小节布鲁斯 12-bar blues 蓝调 I IV V 和声">
+      <article class="western-card" data-search="十二小节布鲁斯 12-bar blues 蓝调 I IV V 和声" data-detail="十二小节布鲁斯是常见的蓝调和声循环，通常以 I、IV、V 级和弦构成三个四小节区域，并可在第四小节加入属七和弦、在末尾使用 turnaround 回到开头。不同传统会采用快速变化、和弦替代或节奏变化，因此该和弦表是基础模型而非唯一版本。">
         <div class="western-card-head"><h3>十二小节布鲁斯 <span>12-bar Blues</span></h3><span class="western-kind">和声模型</span></div>
         <p>以主和弦、下属和弦、属和弦组成循环框架，常配合蓝调音阶、切分节奏与即兴演奏。</p>
         <small>常见和声：I— I— I— I｜IV— IV— I— I｜V— IV— I— V</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
-      <article class="western-card" data-search="三十二小节 AABA 32-bar form 爵士 标准曲">
+      <article class="western-card" data-search="三十二小节 AABA 32-bar form 爵士 标准曲" data-detail="三十二小节 AABA 通常由四个八小节乐段组成：前两个 A 段建立并重复主题，B 段（bridge）带来旋律或和声对比，最后一个 A 段回归主题。爵士演奏常在重复的和声框架上安排即兴独奏，实际作品也可能在段落长度和结尾处有所变化。">
         <div class="western-card-head"><h3>三十二小节 AABA <span>32-bar Form</span></h3><span class="western-kind">歌曲结构</span></div>
         <p>爵士标准曲与流行歌曲常见形式。两个 A 段建立主题，B 段（桥段）带来对比，最后回到 A 段。</p>
         <small>结构：A（8）—A（8）—B（8）—A（8）</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="回旋奏鸣曲式 rondo-sonata form ABACABA 奏鸣回旋" data-detail="回旋奏鸣曲式将回旋曲主部反复回归与奏鸣曲式的调性布局结合，常见轮廓为 A—B—A—C—A—B′—A。中段 C 常承担展开功能，后段的 B′ 与 A 回归会照顾主调收束；古典时期末乐章常用此结构。">
+        <div class="western-card-head"><h3>回旋奏鸣曲式 <span>Rondo-Sonata Form</span></h3><span class="western-kind">曲式模型</span></div>
+        <p>结合回旋曲主部回归与奏鸣曲式的呈示、展开和再现逻辑，兼具主题熟悉感与调性发展。</p>
+        <small>常见轮廓：A—B—A—C—A—B′—A</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="谐谑曲三声中部 scherzo trio scherzo and trio 三部曲式" data-detail="谐谑曲与三声中部通常组成快速的 A—B—A′ 三部结构，可视为小步舞曲乐章的较活跃替代。谐谑曲段常有鲜明重音、快速节奏或幽默效果，三声中部提供对比，之后谐谑曲返回；交响曲中也常出现谐谑曲的扩展形式。">
+        <div class="western-card-head"><h3>谐谑曲与三声中部 <span>Scherzo &amp; Trio</span></h3><span class="western-kind">套曲乐章</span></div>
+        <p>以快速、活跃的谐谑曲段和对比性的三声中部构成三部布局，常见于交响曲与室内乐。</p>
+        <small>结构：谐谑曲 A—三声中部 B—谐谑曲 A′</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="帕萨卡利亚 passacaglia 固定低音 变奏 巴洛克" data-detail="帕萨卡利亚源自舞曲传统，常以低音声部中反复出现的固定主题为基础，在其上方连续发展变奏。固定低音通常具有庄重感，可在不同声部之间转移或改变形态；巴洛克作品中常见持续低音和对位织体，后世作曲家也会扩展其和声与音色。">
+        <div class="western-card-head"><h3>帕萨卡利亚 <span>Passacaglia</span></h3><span class="western-kind">变奏模型</span></div>
+        <p>围绕反复出现的低音主题或和声框架持续写作变奏，常发展出层叠、递进的复调织体。</p>
+        <small>模型：固定低音 / 和声循环—连续变奏</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="恰空 chacconne chaconne 固定和声 变奏 舞曲" data-detail="恰空是建立在反复和声进行之上的变奏性舞曲，常以庄重的三拍子呈现。与帕萨卡利亚在历史用法上有交叠，恰空通常更突出和声循环，主题可能位于低音，也可能由其他声部承担；连续变奏可逐渐改变音型、织体和动态。">
+        <div class="western-card-head"><h3>恰空 <span>Chaconne</span></h3><span class="western-kind">变奏模型</span></div>
+        <p>以循环和声为支点展开连续变奏，常见庄重的三拍子舞曲感，与帕萨卡利亚在历史上有交叠。</p>
+        <small>模型：反复和声进行—旋律与织体变奏</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="里托内罗形式 ritornello form 协奏曲 主题全奏 独奏" data-detail="里托内罗形式常用于巴洛克协奏曲乐章。乐队全奏反复呈示主要主题或其片段，独奏段则在不同调性区域展示技巧并发展素材；全奏与独奏交替形成清晰的段落对比，晚期作品中主题回归可经过删节、移调或重新配器。">
+        <div class="western-card-head"><h3>里托内罗形式 <span>Ritornello Form</span></h3><span class="western-kind">协奏曲模型</span></div>
+        <p>乐队全奏主题与独奏段落交替出现，常用于巴洛克协奏曲并强调音色和演奏角色对照。</p>
+        <small>结构：乐队主题回归—独奏插段—终段全奏</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="分节歌形式 strophic form 分节 歌曲 反复旋律" data-detail="分节歌为每一段歌词重复使用相同或基本相同的旋律，段落通常共享和声与伴奏框架。它适合叙事歌、民歌和便于传唱的歌曲；作曲者也可在末节改变配器、力度或尾声，在保持形式统一的同时加强结尾。">
+        <div class="western-card-head"><h3>分节歌形式 <span>Strophic Form</span></h3><span class="western-kind">歌曲结构</span></div>
+        <p>多段歌词反复使用同一旋律，结构统一、便于记忆和传唱，常见于民歌与叙事歌曲。</p>
+        <small>结构：A—A—A……（歌词更换，曲调重复）</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="通谱歌曲 through-composed through composed 艺术歌曲 逐段创作" data-detail="通谱歌曲为不同歌词段落持续创作新音乐，不要求每节回到相同副歌或曲调，因此可以紧贴诗句意象、叙事和情绪变化。动机、调性或伴奏音型仍可在全曲中呼应；舒伯特等作曲家的艺术歌曲中常见通谱或部分通谱写法。">
+        <div class="western-card-head"><h3>通谱歌曲 <span>Through-composed</span></h3><span class="western-kind">歌曲结构</span></div>
+        <p>旋律与伴奏随歌词和情绪逐段发展，不固定重复整段曲调，适合连贯叙事与细腻诗意表达。</p>
+        <small>结构：A—B—C……（持续发展，少有整段回归）</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="主歌副歌 verse-chorus form verse chorus 流行歌曲" data-detail="主歌—副歌是流行歌曲常用的分节结构。主歌通常在每轮带来新的歌词并推动叙事，副歌反复呈现核心主题或标题句，旋律、音域和配器常更突出；歌曲可在末尾加入桥段、前副歌、间奏或尾声。">
+        <div class="western-card-head"><h3>主歌—副歌结构 <span>Verse–Chorus Form</span></h3><span class="western-kind">歌曲结构</span></div>
+        <p>主歌推进叙事，副歌反复强调歌曲核心主题，常用于流行歌曲并便于听众记忆。</p>
+        <small>常见布局：主歌—副歌—主歌—副歌—桥段—副歌</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="达卡波咏叹调 da capo aria A B A 返始咏叹调 巴洛克歌剧" data-detail="达卡波咏叹调是巴洛克歌剧和清唱剧中的三段式咏叹调，先演唱 A 段，再转入对比性的 B 段，随后按 Da Capo 指示返回 A 段。返始时歌者通常加入装饰和即兴润饰，作曲谱面可只写基本旋律与和声框架。">
+        <div class="western-card-head"><h3>达卡波咏叹调 <span>Da capo Aria</span></h3><span class="western-kind">声乐形式</span></div>
+        <p>巴洛克歌剧常见的 A—B—A′ 咏叹调形式，返始段通常允许歌者加入装饰变化。</p>
+        <small>结构：A（呈示）—B（对比）—Da Capo A′（装饰再现）</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
+      </article>
+      <article class="western-card" data-search="巴洛克舞曲组曲 baroque dance suite allemande courante sarabande gigue" data-detail="巴洛克舞曲组曲将若干同调或相关调性的器乐舞曲串联成套，常见阿勒曼德、库朗特、萨拉班德和吉格，也可加入前奏曲、小步舞曲或加沃特。各舞曲保留不同的速度、拍号和节奏性格，许多乐章采用带反复的二部曲式。">
+        <div class="western-card-head"><h3>巴洛克舞曲组曲 <span>Baroque Dance Suite</span></h3><span class="western-kind">套曲模型</span></div>
+        <p>由多种速度与舞蹈性格不同的器乐乐章组成，通常保持相关调性并形成整体对比。</p>
+        <small>常见次序：阿勒曼德—库朗特—萨拉班德—吉格</small>
+        <div class="western-actions"><button class="chip western-details" type="button">查看详细说明</button></div>
       </article>
     </div>
     <p class="western-empty" id="westernEmpty" hidden>没有找到匹配的形式或模型，请尝试其他关键词。</p>
+    <dialog class="western-dialog" id="westernDetailDialog" aria-labelledby="westernDetailTitle">
+      <div class="western-dialog-head">
+        <h3 id="westernDetailTitle"></h3>
+        <button class="western-dialog-close" type="button" aria-label="关闭详细说明">×</button>
+      </div>
+      <p class="western-dialog-detail"></p>
+      <p class="western-dialog-summary"></p>
+      <p class="western-dialog-structure"></p>
+      <div class="western-actions">
+        <button class="chip western-web-search" type="button">在 Google 搜索</button>
+      </div>
+    </dialog>
   </section>
 
-  <footer data-page-node-id="BrxJbgpykEsN7PmO14Ogui">
-    <b data-page-node-id="afNi9NXIvZHAF8cW9TjiM7">技术路线</b>　旋律音高序列 → Krumhansl 音级轮廓调性判定 → 隐马尔可夫模型（观测：每小节音级加权直方图；状态：调内和弦）→ 维特比算法全局最优解码 → 风格化音型编排 → 多振荡器实时合成。导出使用标准 MIDI 文件格式（SMF）与 16bit PCM WAV 编码。<br data-page-node-id="FL296xMdzbZAwsHcVNwdRE">
-    <b data-page-node-id="xCnuSGrdvmg1uIiLdzB9Op">文字配乐</b>　文本 → 断句与格律指纹 → 词牌匹配（字数 / 句数 / 句式三重比对）→ 宫调推定 → 依字行腔（声调走向 + 韵脚落音 + 乐句动机）→ 写入节奏网格 → 复用同一条和声与伴奏流水线。<br data-page-node-id="EGQJzbis417ZFuoqM7FJ9L">
-    <b data-page-node-id="Q8e2dc3gnJGSDIjnDrNXMo">说明</b>　本页为纯前端静态原型，音高识别、和弦推导、文本配乐与音频合成都由浏览器实时完成，可离线运行。后续可将和弦模块平移至 Python 服务端，对齐教材 4.4 的 B/S 架构。
-  </footer>
 </div>
 
 <script src="src/js/00-music-core.js"></script>

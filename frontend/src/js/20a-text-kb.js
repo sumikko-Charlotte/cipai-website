@@ -82,5 +82,16 @@ const CI_PAI = [
   {name:'五言绝句',kind:'shi',n:20,lc:4,lines:[5,5,5,5],alt:['五绝'],gong:'zheng',sample:'空山不见人，但闻人语响'},
   {name:'七言绝句',kind:'shi',n:28,lc:4,lines:[7,7,7,7],alt:['七绝'],gong:'zheng',sample:'两个黄鹂鸣翠柳，一行白鹭上青天'},
   {name:'五言律诗',kind:'shi',n:40,lc:8,lines:[5,5,5,5,5,5,5,5],alt:['五律'],gong:'huangzhong',sample:'国破山河在，城春草木深'},
-  {name:'七言律诗',kind:'shi',n:56,lc:8,lines:[7,7,7,7,7,7,7,7],alt:['七律'],gong:'huangzhong',sample:'无边落木萧萧下，不尽长江滚滚来'}
+  {name:'七言律诗',kind:'shi',n:56,lc:8,lines:[7,7,7,7,7,7,7,7],alt:['七律'],gong:'huangzhong',sample:'无边落木萧萧下，不尽长江滚滚来'},
+  {name:'忆秦娥',kind:'ci',n:46,lc:10,lines:[7,3,3,7,3,7,3,3,7,3],alt:['秦楼月','双荷叶','蓬莱阁'],gong:'nanlv',sample:'箫声咽，秦娥梦断秦楼月'},
+  {name:'诉衷情',kind:'ci',n:44,lc:8,lines:null,alt:['诉衷情令','一丝风'],gong:'xianlv',sample:'当年万里觅封侯，匹马戍梁州'},
+  {name:'谒金门',kind:'ci',n:45,lc:8,lines:null,alt:['空相忆','花自落','垂杨碧'],gong:'shang',sample:'风乍起，吹皱一池春水'},
+  {name:'唐多令',kind:'ci',n:60,lc:10,lines:null,alt:['糖多令','南楼令','箜篌曲'],gong:'zhonglv',sample:'何处合成愁？离人心上秋'},
+  {name:'贺新郎',kind:'ci',n:116,lc:20,lines:null,alt:['金缕曲','贺新凉','乳燕飞'],gong:'banshe',sample:'我最怜君中宵舞，道男儿到死心如铁'},
+  {name:'八声甘州',kind:'ci',n:97,lc:18,lines:null,alt:['甘州','潇潇雨'],gong:'xianlv',sample:'对潇潇暮雨洒江天，一番洗清秋'},
+  {name:'水龙吟',kind:'ci',n:102,lc:22,lines:null,alt:['龙吟曲','庄椿岁','小楼连苑'],gong:'dashi',sample:'楚天千里清秋，水随天去秋无际'},
+  {name:'扬州慢',kind:'ci',n:98,lc:20,lines:null,alt:['扬州慢慢','胜胜慢'],gong:'nanlv',sample:'淮左名都，竹西佳处，解鞍少驻初程'},
+  {name:'摸鱼儿',kind:'ci',n:116,lc:22,lines:null,alt:['摸鱼子','买陂塘','迈陂塘'],gong:'shang',sample:'更能消几番风雨，匆匆春又归去'},
+  {name:'兰陵王',kind:'ci',n:130,lc:26,lines:null,alt:['兰陵王慢','大犯'],gong:'banshe',sample:'柳阴直，烟里丝丝弄碧'},
+  {name:'满庭芳',kind:'ci',n:95,lc:20,lines:null,alt:['满庭霜','锁阳台','满庭花'],gong:'huangzhong',sample:'山抹微云，天连衰草'}
 ];

@@ -46,7 +46,7 @@
     const query = input.value.trim().toLocaleLowerCase();
     let visible = 0;
     cards.forEach(card => {
-      const searchable = `${card.dataset.search || ''} ${card.textContent}`.toLocaleLowerCase();
+      const searchable = `${card.dataset.search || ''} ${card.dataset.detail || ''} ${card.textContent}`.toLocaleLowerCase();
       const matches = !query || searchable.includes(query);
       card.hidden = !matches;
       if (matches) visible += 1;
@@ -56,5 +56,50 @@
   };
 
   input.addEventListener('input', filter);
+  grid.addEventListener('click', event => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest('.western-details');
+    if (!button) return;
+
+    const card = button.closest('.western-card');
+    const dialog = document.getElementById('westernDetailDialog');
+    if (!card || !(dialog instanceof HTMLDialogElement)) return;
+    const title = card.querySelector('h3');
+    const englishTitle = title && title.querySelector('span');
+    dialog.querySelector('#westernDetailTitle').textContent = title ? title.textContent.trim() : '';
+    dialog.querySelector('.western-dialog-detail').textContent = card.dataset.detail || '';
+    dialog.querySelector('.western-dialog-summary').textContent = card.querySelector('p').textContent;
+    dialog.querySelector('.western-dialog-structure').textContent = card.querySelector('small').textContent;
+    dialog.querySelector('.western-web-search').dataset.librarySearch =
+      `${title ? title.childNodes[0].textContent.trim() : ''} ${englishTitle ? englishTitle.textContent : ''} 西方音乐形式`;
+    dialog.showModal();
+  });
   filter();
 })();
+
+/* ---------- 资料库：打开浏览器搜索 ---------- */
+document.addEventListener('click', event => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const button = target.closest('[data-library-search]');
+  if (!button) return;
+  const query = button.dataset.librarySearch;
+  if (query) window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank', 'noopener,noreferrer');
+});
+
+const westernDialog = document.getElementById('westernDetailDialog');
+if (westernDialog instanceof HTMLDialogElement) {
+  westernDialog.querySelector('.western-dialog-close').addEventListener('click', () => westernDialog.close());
+  westernDialog.addEventListener('click', event => {
+    if (event.target === westernDialog) westernDialog.close();
+  });
+}
+
+const cpDetailDialog = document.getElementById('cpDetailDialog');
+if (cpDetailDialog instanceof HTMLDialogElement) {
+  cpDetailDialog.querySelector('.cp-dialog-close').addEventListener('click', () => cpDetailDialog.close());
+  cpDetailDialog.addEventListener('click', event => {
+    if (event.target === cpDetailDialog) cpDetailDialog.close();
+  });
+}

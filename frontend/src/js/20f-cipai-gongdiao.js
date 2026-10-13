@@ -48,7 +48,14 @@ function showCiPai(name){
       '<button class="chip" onclick="previewGong(\'' + cp.gong + '\')">试听 ' + gd.name + ' 音阶</button>' +
       '<button class="chip" onclick="previewGong(\'' + cp.gong + '\', 1)">试听 ' + MODES5[gd.mode].name + ' 终止式</button>' +
     '</div>';
+  const searchButton = document.createElement('button');
+  searchButton.className = 'chip';
+  searchButton.type = 'button';
+  searchButton.dataset.librarySearch = cp.name + ' ' + (cp.alt || []).join(' ') + ' 词牌 格律';
+  searchButton.textContent = '在 Google 搜索此词牌';
+  d.querySelector('.cand').appendChild(searchButton);
   d.classList.add('on');
+  document.getElementById('cpDetailDialog').showModal();
 }
 function applyCiPai(name){
   const cp = CI_PAI.find(c => c.name === name);
