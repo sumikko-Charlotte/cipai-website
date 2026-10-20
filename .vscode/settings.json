@@ -1,0 +1,10 @@
+{
+  // start.bat 等批处理必须是 GBK + CRLF（Windows cmd 的硬性要求）。
+  // 这里让 VSCode 始终用 GBK 读写 *.bat、保存时保持 CRLF：
+  // 打开不再乱码，也不会再把文件误存成 UTF-8 / LF 导致 cmd 解析出错。
+  // 其他类型文件不受影响，仍按 UTF-8 处理。
+  "[bat]": {
+    "files.encoding": "gbk",
+    "files.eol": "\r\n"
+  }
+}
