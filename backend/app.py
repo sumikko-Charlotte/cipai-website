@@ -137,6 +137,7 @@ async def analyze(audio: UploadFile = File(..., description="录音或音频文�
     result.update(
         {
             "engine": engine,
+            "matrix_source": key_analysis.matrix_source(),
             "elapsed_ms": round((time.perf_counter() - t0) * 1000, 1),
             "filename": audio.filename,
             "bytes": len(data),

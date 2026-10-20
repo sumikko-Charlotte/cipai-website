@@ -17,6 +17,10 @@
 """
 from __future__ import annotations
 
+import json
+import math
+import os
+
 # Krumhansl-Kessler 音级轮廓（以主音为 0 级，长度 12）
 KRUMLANSL_MAJOR = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
 KRUMLANSL_MINOR = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
@@ -95,6 +99,56 @@ TRANS = {
 
 BEATS_PER_BAR = 4
 GRIDS_PER_BEAT = 4
+
+# tools/train_chord_matrix.py 生成的统计转移矩阵；缺失或格式非法时回落 TRANS
+_MATRIX_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "trans_matrix.json")
+_trans_override: tuple[dict, str] | None = None
+_matrix_source = "builtin"
+
+
+def _coerce_matrix(data: object) -> dict | None:
+    """校验并转换 trans_matrix.json：返回 {mode: {roman: {roman: log概率分}}}，非法返回 None。"""
+    if not isinstance(data, dict):
+        return None
+    out = {}
+    for mode in ("major", "minor"):
+        node = data.get(mode)
+        if not isinstance(node, dict) or not isinstance(node.get("trans"), dict):
+            return None
+        romans = [c["roman"] for c in DIATONIC[mode]]
+        rows = {}
+        for a in romans:
+            row = node["trans"].get(a)
+            if not isinstance(row, dict):
+                return None
+            scores = {}
+            for b in romans:
+                p = row.get(b)
+                if not isinstance(p, (int, float)) or isinstance(p, bool) or p <= 0:
+                    return None
+                scores[b] = max(math.log(p), -8.0)
+            rows[a] = scores
+        out[mode] = rows
+    return out
+
+
+def load_trans_matrix() -> tuple[dict, str]:
+    """惰性加载统计矩阵，返回 (转移表, 来源)。trained 表已转为对数分，量纲与 TRANS 一致。"""
+    global _trans_override
+    if _trans_override is None:
+        matrix = None
+        try:
+            with open(_MATRIX_PATH, encoding="utf-8") as f:
+                matrix = _coerce_matrix(json.load(f))
+        except (OSError, ValueError):
+            matrix = None
+        _trans_override = (matrix, "trained") if matrix is not None else (TRANS, "builtin")
+    return _trans_override
+
+
+def matrix_source() -> str:
+    """当前生效的转移表来源："trained"（统计矩阵）或 "builtin"（内置 TRANS）。"""
+    return load_trans_matrix()[1]
 
 
 def _mod(n: int) -> int:
@@ -190,7 +244,8 @@ def chord_sequence(notes: list[dict], key: str, mode: str) -> list[dict]:
         {"rootPc": _mod(root_pc + c["deg"]), "type": c["type"], "roman": c["roman"]}
         for c in DIATONIC[mode]
     ]
-    trans = TRANS[mode]
+    trans, _source = load_trans_matrix()
+    trans = trans[mode]
 
     # 每小节音级直方图（按音符数计权，与前端 barHistogram 一致）
     bars: dict[int, list[float]] = {}
