@@ -25,9 +25,10 @@ import time
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-from core import accompaniment, key_analysis, pitch_detection
+from core import accompaniment, key_analysis, pitch_detection, validation_charts
 
 logger = logging.getLogger("accompaniment")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -35,7 +36,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 app = FastAPI(
     title="旋律的自动伴奏生成 API",
     version="0.1.0",
-    description="课程项目《人工智能程序设计实践》第 4 章 · 后端音频分析与未来 AI 生成服务",
+    description="课程项目《人工智能程序设计实践》第 4 章 · 后端音频分析与未来 AI 生成服务"
+    "<br>数据验证页（课本 4.3.2，实时渲染）：<a href=\"/validation\">/validation</a>",
 )
 
 # 前端目前用 file:// 直接打开（Origin 为 null）或本地 http 服务，
@@ -57,7 +59,8 @@ AUDIO_FIELD = "audio"
 
 @app.get("/")
 async def root() -> dict:
-    return {"service": "accompaniment-api", "version": app.version, "docs": "/docs"}
+    return {"service": "accompaniment-api", "version": app.version, "docs": "/docs",
+            "validation": "/validation"}
 
 
 def _engine_name() -> str:
@@ -144,6 +147,51 @@ async def analyze(audio: UploadFile = File(..., description="录音或音频文�
         }
     )
     return result
+
+
+_VALIDATION_HTML = """<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>课本 4.3.2 数据验证</title>
+<style>
+body{font-family:sans-serif;max-width:1100px;margin:24px auto;padding:0 16px;color:#222}
+h1{font-size:22px} h2{font-size:17px;border-bottom:1px solid #ddd;padding-bottom:4px}
+.note{background:#f6f8fa;border:1px solid #ddd;border-radius:6px;padding:10px 14px}
+img{max-width:100%;border:1px solid #ccc;margin:8px 0}
+code{background:#eee;padding:1px 5px;border-radius:3px}
+</style>
+</head>
+<body>
+<h1>课本 4.3.2 数据验证 · 和弦矩阵可信度</h1>
+<p class="note">本页由后端实时渲染：每次打开都重新读取
+<code>backend/core/data/trans_matrix.json</code>（训练脚本重跑后刷新即生效，无需重启）。
+当前和弦转移矩阵来源：<b>__SOURCE__</b>（trained = 语料统计矩阵，builtin = 内置 TRANS 表）。
+</p>
+<h2>1. 转移矩阵「训练 vs 手写」对比热力图</h2>
+__TRANS_SECTION__
+<h2>2. 和弦-单音分布（课本图 4-7 同款，红色为和弦构成音）</h2>
+__EMIS_SECTION__
+</body></html>
+"""
+
+_TRANS_IMG = '<img alt="转移矩阵对比热力图" src="data:image/png;base64,%s">'
+_TRANS_FALLBACK = ('<p class="note">热力图不可用：matplotlib 未安装，或 trans_matrix.json 缺失/格式非法。'
+                   '请先运行 <code>python tools/train_chord_matrix.py</code> 生成统计矩阵。</p>')
+_EMIS_IMG = '<img alt="和弦-单音分布柱状图" src="data:image/png;base64,%s">'
+_EMIS_FALLBACK = ('<p class="note">和弦-单音分布图不可用：matplotlib 未安装，或 trans_matrix.json 缺少 '
+                  'emission 字段。请重新运行 <code>python tools/train_chord_matrix.py</code>。</p>')
+
+
+@app.get("/validation", response_class=HTMLResponse, summary="课本 4.3.2 数据验证页（实时渲染）")
+async def validation() -> str:
+    """实时渲染转移矩阵对比热力图与和弦-单音分布柱状图，内嵌 base64 PNG。"""
+    trans_b64 = validation_charts.png_to_b64(validation_charts.transition_chart_png())
+    emis_b64 = validation_charts.png_to_b64(validation_charts.emission_chart_png())
+    return (_VALIDATION_HTML
+            .replace("__SOURCE__", key_analysis.matrix_source())
+            .replace("__TRANS_SECTION__", _TRANS_IMG % trans_b64 if trans_b64 else _TRANS_FALLBACK)
+            .replace("__EMIS_SECTION__", _EMIS_IMG % emis_b64 if emis_b64 else _EMIS_FALLBACK))
 
 
 class ChordIn(BaseModel):
