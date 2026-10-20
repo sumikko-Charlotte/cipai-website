@@ -16,6 +16,8 @@ import base64
 import json
 import os
 
+from core.key_analysis import DIATONIC as DIATONIC_CHART
+
 _MATRIX_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "trans_matrix.json")
 
 try:
@@ -138,6 +140,52 @@ def emission_chart_png() -> bytes | None:
             if c_i == 0:
                 ax.set_ylabel("%s\nP(pitch|chord)" % mode, fontsize=8)
     fig.suptitle("Chord-tone distribution (red = chord tones)")
+    fig.tight_layout()
+    buf = _fig_to_png(fig)
+    plt.close(fig)
+    return buf
+
+
+def to_I_chart_png() -> bytes | None:
+    """课本图 4-8：「向 I(C) 和弦过渡概率」横向柱状图（各和弦 → I）。"""
+    return _I_transition_chart("to")
+
+
+def from_I_chart_png() -> bytes | None:
+    """课本图 4-9：「从 I(C) 和弦过渡到各和弦概率」横向柱状图（I → 各和弦，常用 6 个）。"""
+    return _I_transition_chart("from")
+
+
+def _I_transition_chart(direction: str) -> bytes | None:
+    if not _HAS_MPL:
+        return None
+    data = _load_matrix()
+    if data is None:
+        return None
+
+    fig, axes = plt.subplots(1, 2, figsize=(11, 5))
+    for ax, mode in zip(axes, ("major", "minor")):
+        romans = [c["roman"] for c in DIATONIC_CHART[mode]]
+        if direction == "to":
+            values = [data[mode]["trans"][a]["I" if mode == "major" else "i"] for a in romans]
+            target, title = ("I" if mode == "major" else "i"), "P(next = %s | chord)  (%s)"
+        else:
+            src = "I" if mode == "major" else "i"
+            values = [data[mode]["trans"][src][b] for b in romans]
+            target, title = src, "P(next = chord | %s)  (%s)"
+        order = sorted(range(len(romans)), key=lambda i: values[i])
+        ax.barh([romans[i] for i in order], [values[i] for i in order],
+                color="#1f77b4")
+        for y, i in enumerate(order):
+            ax.text(values[i], y, " %.3f" % values[i], va="center", fontsize=8)
+        hi = max(values)
+        for y, i in enumerate(order):
+            if values[i] == hi:
+                ax.get_yticklabels()[y].set_color("#d62728")
+        ax.set_title(title % (target, mode), fontsize=10)
+        ax.set_xlim(0, max(values) * 1.25)
+        ax.tick_params(labelsize=8)
+    fig.suptitle("Chord transitions %s I (C) — trained" % ("to" if direction == "to" else "from I to"))
     fig.tight_layout()
     buf = _fig_to_png(fig)
     plt.close(fig)

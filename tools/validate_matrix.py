@@ -4,6 +4,8 @@
 产物：
     tools/matrix_compare.png   转移矩阵「训练 vs 手写」对比热力图（含差值面板）
     tools/emission_chart.png   和弦-单音分布柱状图（课本图 4-7 同款）
+    tools/to_I_chart.png       向 I 和弦过渡概率柱状图（课本图 4-8 同款）
+    tools/from_I_chart.png     从 I 和弦过渡到各和弦概率柱状图（课本图 4-9 同款）
 
 用法（在仓库根目录，需先跑过 tools/train_chord_matrix.py）：
     python tools/validate_matrix.py
@@ -25,6 +27,8 @@ from core import validation_charts  # noqa: E402
 OUTPUTS = [
     ("transition_chart_png", os.path.join(ROOT, "tools", "matrix_compare.png")),
     ("emission_chart_png", os.path.join(ROOT, "tools", "emission_chart.png")),
+    ("to_I_chart_png", os.path.join(ROOT, "tools", "to_I_chart.png")),
+    ("from_I_chart_png", os.path.join(ROOT, "tools", "from_I_chart.png")),
 ]
 
 

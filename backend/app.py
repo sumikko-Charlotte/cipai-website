@@ -20,6 +20,7 @@ core/ 已实现真实分析管线（librosa.pyin 音高提取 + Krumhansl 调性
 from __future__ import annotations
 
 import base64
+import json
 import logging
 import time
 
@@ -172,6 +173,16 @@ code{background:#eee;padding:1px 5px;border-radius:3px}
 __TRANS_SECTION__
 <h2>2. 和弦-单音分布（课本图 4-7 同款，红色为和弦构成音）</h2>
 __EMIS_SECTION__
+<h2>3. 向 I 和弦过渡概率（课本图 4-8 同款，大调 I 应与 V 接近或最高）</h2>
+__TO_I_SECTION__
+<h2>4. 从 I 和弦过渡到各和弦概率（课本图 4-9 同款）</h2>
+__FROM_I_SECTION__
+<h2>5. 验证结论</h2>
+<p class="note">
+1）发射矩阵中<b>和弦构成音（红色）的概率普遍最高</b>，说明观测模型能正确识别和弦音；<br>
+2）转移矩阵中<b>V → I（五级到一级）概率最高</b>，符合功能和声解决的乐理理论（大调中亦与 V7 → I 终止式一致）；<br>
+3）统计口径：__CORPUS__（OpenEWLD 公有领域 leadsheet 语料，经 to_C 归一化后统计，加 1 拉普拉斯平滑）。
+</p>
 </body></html>
 """
 
@@ -181,17 +192,38 @@ _TRANS_FALLBACK = ('<p class="note">热力图不可用：matplotlib 未安装，
 _EMIS_IMG = '<img alt="和弦-单音分布柱状图" src="data:image/png;base64,%s">'
 _EMIS_FALLBACK = ('<p class="note">和弦-单音分布图不可用：matplotlib 未安装，或 trans_matrix.json 缺少 '
                   'emission 字段。请重新运行 <code>python tools/train_chord_matrix.py</code>。</p>')
+_I_IMG = '<img alt="%s" src="data:image/png;base64,%s">'
+_I_FALLBACK = '<p class="note">过渡概率柱状图不可用：matplotlib 未安装，或 trans_matrix.json 缺失/非法。</p>'
+
+
+def _read_matrix_meta() -> dict | None:
+    """实时读 trans_matrix.json 的 meta（语料数量等），缺失/非法返回 None。"""
+    try:
+        with open(key_analysis._MATRIX_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        meta = data.get("meta")
+        files = meta.get("files_parsed")
+        return {"files": files} if isinstance(meta, dict) and isinstance(files, int) else None
+    except (OSError, ValueError, AttributeError):
+        return None
 
 
 @app.get("/validation", response_class=HTMLResponse, summary="课本 4.3.2 数据验证页（实时渲染）")
 async def validation() -> str:
-    """实时渲染转移矩阵对比热力图与和弦-单音分布柱状图，内嵌 base64 PNG。"""
+    """实时渲染验证图表（热力图/分布图/I 过渡柱状图），内嵌 base64 PNG。"""
+    matrix = _read_matrix_meta()
     trans_b64 = validation_charts.png_to_b64(validation_charts.transition_chart_png())
     emis_b64 = validation_charts.png_to_b64(validation_charts.emission_chart_png())
+    to_i_b64 = validation_charts.png_to_b64(validation_charts.to_I_chart_png())
+    from_i_b64 = validation_charts.png_to_b64(validation_charts.from_I_chart_png())
+    corpus_desc = "基于 %s 首真实乐谱统计" % matrix["files"] if matrix else "语料信息不可用"
     return (_VALIDATION_HTML
             .replace("__SOURCE__", key_analysis.matrix_source())
+            .replace("__CORPUS__", corpus_desc)
             .replace("__TRANS_SECTION__", _TRANS_IMG % trans_b64 if trans_b64 else _TRANS_FALLBACK)
-            .replace("__EMIS_SECTION__", _EMIS_IMG % emis_b64 if emis_b64 else _EMIS_FALLBACK))
+            .replace("__EMIS_SECTION__", _EMIS_IMG % emis_b64 if emis_b64 else _EMIS_FALLBACK)
+            .replace("__TO_I_SECTION__", _I_IMG % ("向 I 和弦过渡概率", to_i_b64) if to_i_b64 else _I_FALLBACK)
+            .replace("__FROM_I_SECTION__", _I_IMG % ("从 I 和弦过渡概率", from_i_b64) if from_i_b64 else _I_FALLBACK))
 
 
 class ChordIn(BaseModel):

@@ -10,3 +10,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# 语料采集日志（corpus/ 下的 .musicxml 语料本身入库）
+corpus/collect.log

@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 import xml.etree.ElementTree as ET
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -57,9 +58,16 @@ STEP_PC = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
 OUT_PATH = os.path.join(BACKEND, "core", "data", "trans_matrix.json")
 
+# 真实语料优先（课本 4.3.1），为空时回落程序合成样本（tools/fixtures/）
+CORPUS_DIR = os.path.join(ROOT, "corpus")
+FIXTURES_DIR = os.path.join(ROOT, "tools", "fixtures")
+
 # (级数偏移, 和弦类型) → 级数符号，与 DIATONIC 一致
 ROMAN = {(mode, c["deg"], c["type"]): c["roman"] for mode, cs in DIATONIC.items() for c in cs}
 MODES = ("major", "minor")
+
+# train() 解析成功的文件数（main 写入 JSON meta）
+_parsed_count = [0]
 
 
 def tonic_pc(fifths: int, mode: str) -> int:
@@ -145,6 +153,7 @@ def train(corpus_dir: str) -> dict:
             skipped += 1
             continue
         parsed += 1
+        _parsed_count[0] = parsed
         print("解析 %s：%s，%d 个和弦：%s" % (name, mode, len(chords),
                                             " ".join(r for r, _ in chords)))
         tc, cc = trans_counts[mode], tone_counts[mode]
@@ -227,11 +236,25 @@ def compare(result: dict) -> None:
 
 
 def main() -> int:
-    corpus_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "tools", "fixtures")
+    if len(sys.argv) > 1:
+        corpus_dir = sys.argv[1]
+    elif any(f.lower().endswith((".musicxml", ".xml")) for f in os.listdir(CORPUS_DIR)):
+        corpus_dir = CORPUS_DIR
+    else:
+        corpus_dir = FIXTURES_DIR
+        print("corpus/ 为空，回落程序合成样本 %s" % FIXTURES_DIR)
     result = train(corpus_dir)
+    payload = {
+        "meta": {
+            "corpus_dir": os.path.basename(corpus_dir),
+            "files_parsed": _parsed_count[0],
+            "trained_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        },
+        **result,
+    }
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     with open(OUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
+        json.dump(payload, f, ensure_ascii=False, indent=2)
     print("\n已写出 %s" % OUT_PATH)
     compare(result)
     return 0

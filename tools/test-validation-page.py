@@ -53,9 +53,11 @@ def main() -> int:
         status, html = fetch(port)
         ok &= check("返回 200", status == 200, str(status))
         ok &= check("含「数据验证」", "数据验证" in html)
-        ok &= check("含 base64 图数据", html.count("data:image/png;base64,") >= 2,
+        ok &= check("含 base64 图数据", html.count("data:image/png;base64,") >= 4,
                     "内嵌图片 %d 张" % html.count("data:image/png;base64,"))
         ok &= check("标注矩阵来源", "trained" in html or "builtin" in html)
+        ok &= check("含 I 过渡柱状图区块", "向 I 和弦过渡概率" in html and "从 I 和弦过渡概率" in html)
+        ok &= check("含验证结论文案", "五级到一级" in html and "首真实乐谱统计" in html)
 
         print("== 2. 实时性：改 JSON 后页面随之变化 ==")
         with open(MATRIX_PATH, encoding="utf-8") as f:
