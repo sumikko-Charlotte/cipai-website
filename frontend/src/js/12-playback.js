@@ -24,6 +24,7 @@ function tick(){
   const draw = () => {
     const step = (ctx.currentTime - playState.startedAt)/playState.stepSec;
     drawRoll(step);
+    if(typeof staffCursor === 'function') staffCursor(step);
     const bar = Math.floor(step/4);
     document.querySelectorAll('.cblk').forEach((b, i) => b.classList.toggle('now', i === bar));
     if(step >= GRID_COLS + 1.2){ stopPlay(); return; }
@@ -38,6 +39,7 @@ function stopPlay(){
   const btn = document.getElementById('playBtn');
   if(btn) btn.textContent = '播放';
   if(state.events.length) drawRoll(-1);
+  if(typeof staffCursor === 'function') staffCursor(-1);
 }
 function drawRoll(playStep){
   const cv = document.getElementById('rollCanvas');

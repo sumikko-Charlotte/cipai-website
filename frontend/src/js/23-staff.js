@@ -28,7 +28,7 @@ function staffSteps(midi){
 function keySignature(root, mode){
   if(root == null) return {n:0, sharp:true, pcs:[]};
   const rel = mode === 'minor' ? mod(root + 9) : root;   // 小调取其关系大调
-  const MAJ_SHARP = {7:1,2:2,9:3,4:4,11:5,6:6,1:7}, MAJ_FLAT = {5:-1,10:-2,3:-3,8:-4,0:-5}; // G D A E B F# C# / F Bb Eb Ab Db
+  const MAJ_SHARP = {7:1,2:2,9:3,4:4,11:5,6:6,1:7}, MAJ_FLAT = {5:-1,10:-2,3:-3,8:-4,1:-5}; // G D A E B F# C# / F Bb Eb Ab Db
   let n = 0, sharp = true;
   if(MAJ_SHARP[rel] != null) n = MAJ_SHARP[rel];
   else if(MAJ_FLAT[rel] != null){ n = -MAJ_FLAT[rel]; sharp = false; }
@@ -37,25 +37,27 @@ function keySignature(root, mode){
 }
 
 // —— 变音记号（全部用路径画，不依赖系统字体）——
-function sharpPath(x, y){
-  return `<path d="M ${x-3} ${y-7} L ${x-3} ${y+5} M ${x+1.5} ${y-8} L ${x+1.5} ${y+4}" stroke="#222" stroke-width="1.5"/>` +
-         `<path d="M ${x-6} ${y-2} L ${x+5.5} ${y-4} M ${x-6} ${y+3} L ${x+5.5} ${y+1}" stroke="#222" stroke-width="2.2"/>`;
+function sharpPath(x, y, color){
+  color = color || '#222';
+  return `<path d="M ${x-3} ${y-7} L ${x-3} ${y+5} M ${x+1.5} ${y-8} L ${x+1.5} ${y+4}" stroke="${color}" stroke-width="1.5"/>` +
+         `<path d="M ${x-6} ${y-2} L ${x+5.5} ${y-4} M ${x-6} ${y+3} L ${x+5.5} ${y+1}" stroke="${color}" stroke-width="2.2"/>`;
 }
-function naturalPath(x, y){
-  return `<path d="M ${x-2.5} ${y-7} L ${x-2.5} ${y+4} M ${x+2.5} ${y-4} L ${x+2.5} ${y+7}" stroke="#222" stroke-width="1.7"/>` +
-         `<path d="M ${x-2.5} ${y-1} L ${x+2.5} ${y-2.5} M ${x-2.5} ${y+4} L ${x+2.5} ${y+2.5}" stroke="#222" stroke-width="1.7"/>`;
+function naturalPath(x, y, color){
+  color = color || '#222';
+  return `<path d="M ${x-2.5} ${y-7} L ${x-2.5} ${y+4} M ${x+2.5} ${y-4} L ${x+2.5} ${y+7}" stroke="${color}" stroke-width="1.7"/>` +
+         `<path d="M ${x-2.5} ${y-1} L ${x+2.5} ${y-2.5} M ${x-2.5} ${y+4} L ${x+2.5} ${y+2.5}" stroke="${color}" stroke-width="1.7"/>`;
 }
-function flatPath(x, y){
-  return `<path d="M ${x-1} ${y-9} L ${x-1} ${y+3} C ${x-1} ${y+8.5} ${x+5.5} ${y+8} ${x+5.5} ${y+2.5} C ${x+5.5} ${y-1.5} ${x-1} ${y-0.5} ${x-1} ${y+3} Z" fill="#222"/>`;
+function flatPath(x, y, color){
+  return `<path d="M ${x-1} ${y-9} L ${x-1} ${y+3} C ${x-1} ${y+8.5} ${x+5.5} ${y+8} ${x+5.5} ${y+2.5} C ${x+5.5} ${y-1.5} ${x-1} ${y-0.5} ${x-1} ${y+3} Z" fill="${color || '#222'}"/>`;
 }
-function accPath(kind, x, y){
-  return kind === 'sharp' ? sharpPath(x, y) : kind === 'natural' ? naturalPath(x, y) : flatPath(x, y);
+function accPath(kind, x, y, color){
+  return kind === 'sharp' ? sharpPath(x, y, color) : kind === 'natural' ? naturalPath(x, y, color) : flatPath(x, y, color);
 }
 
 // 高音谱号（抽象 G 谱号：主笔 + 螺旋）
-function clefPath(x, yMid){
+function clefPath(x, yMid, color){
   const yG = yMid + STAFF.step * 2, cx = x + 8;
-  return `<g fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round">` +
+  return `<g fill="none" stroke="${color || '#222'}" stroke-width="2.2" stroke-linecap="round">` +
     `<path d="M ${cx+2} ${yMid-40} C ${cx-10} ${yMid-30} ${cx-8} ${yG-10} ${cx} ${yG-6} ` +
           `C ${cx+6} ${yG-3} ${cx+5} ${yG+3} ${cx-1} ${yG+5} ` +
           `C ${cx-8} ${yG+8} ${cx-8} ${yMid+26} ${cx-2} ${yMid+38} ` +

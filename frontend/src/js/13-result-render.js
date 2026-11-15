@@ -37,6 +37,7 @@ function renderResult(silent){
 
   document.getElementById('result').classList.add('on');
   drawRoll(-1);
+  if(typeof renderResultStaff === 'function') renderResultStaff();
   if(!silent) markStep(4);
 }
 function previewChord(ch){

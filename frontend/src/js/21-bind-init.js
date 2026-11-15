@@ -45,7 +45,12 @@ document.getElementById('dlMidi').onclick = exportMidi;
 document.getElementById('dlWav').onclick = exportWav;
 document.getElementById('dlJson').onclick = exportJson;
 
-window.addEventListener('resize', () => { if(state.events.length) drawRoll(-1); else drawIdleWave(); });
+let staffResizeTimer = 0;
+window.addEventListener('resize', () => {
+  if(state.events.length) drawRoll(-1); else drawIdleWave();
+  clearTimeout(staffResizeTimer);
+  staffResizeTimer = setTimeout(() => { if(typeof renderResultStaff === 'function') renderResultStaff(); }, 160);
+});
 
 renderStyles();
 renderInstruments();
